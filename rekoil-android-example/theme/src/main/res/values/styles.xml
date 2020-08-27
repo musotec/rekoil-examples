@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- A custom theme, which can be used by the application.
+        NOTE: no colors were thought out in this theme below.
+     -->
+    <style name="ExampleCustomTheme" parent="Theme.MaterialComponents">
+
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:colorBackground">@color/colorBrandSurface</item>
+        <item name="android:statusBarColor">@color/colorPrimaryDark</item>
+        <item name="android:navigationBarColor">@color/colorPrimaryDark</item>
+
+        <item name="colorPrimaryVariant">#000000</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">@color/colorSecondary</item>
+        <item name="colorSecondaryVariant">@color/colorSecondaryVariant</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+        <item name="colorError">#F44336</item>
+        <item name="colorOnError">#FFFFFF</item>
+        <item name="colorSurface">#1d1d1d</item>
+        <item name="colorOnSurface">#dfffffff</item>
+<!--        <item name="android:colorBackground">@color/background</item>-->
+<!--        <item name="android:statusBarColor">@color/background</item>-->
+<!--        <item name="android:navigationBarColor">@color/background</item>-->
+        <item name="colorOnBackground">#000</item>
+
+        <!-- Affects buttons and Outlined box Text Field -->
+        <item name="shapeAppearanceSmallComponent">@style/AppShapeAppearance.SmallComponent</item>
+
+
+        <item name="tabStyle">@style/AppTabNavigation</item>
+        <item name="bottomNavigationStyle">@style/AppBottomNavigation</item>
+
+        <!-- Affects CardView -->
+        <item name="shapeAppearanceMediumComponent">@style/AppShapeAppearance.MediumComponent</item>
+    </style>
+
+    <style name="FinanceTheme" parent="Theme.MaterialComponents">
+        <item name="flavorIconText"> </item>
+        <item name="colorTitleTextPrimary">#ffffff</item>
+        <item name="colorTitleTextSecondary">#ffffff</item>
+        <item name="titleTextStylePrimary">@style/FinanceTheme.AppBarTitleText</item>
+        <item name="titleTextStyleSecondary">@style/FinanceTheme.AppBarTitleText.Secondary</item>
+
+        <item name="colorShortPrimary">#ffff0000</item>
+        <item name="colorLongPrimary">#ff00ff00</item>
+        <!-- Manually override Snackbars theme, as this is not dark in MaterialComponents
+          despite the DayNight spec... Implementation behind design spec currently. -->
+        <item name="snackbarStyle">@style/snackbar_style_day_night_fix</item>
+        <item name="snackbarButtonStyle">@style/snackbar_button_day_night_fix</item>
+        <item name="snackbarTextViewStyle">@style/snackbar_text_day_night_fix</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.MaterialComponents.SmallComponent</item>
+    </style>
+
+
+    <style name="Widget.MaterialComponents.TextInputLayout.OutlinedBox.ConfirmSend" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="colorControlActivated">@color/colorAccentOrange</item>
+    </style>
+
+    <style name="AccentConfirmSend">
+        <item name="colorControlActivated">@color/colorAccentOrange</item>
+    </style>
+
+
+    <style name="SliderTooltipTextStyle" parent="TextAppearance.MaterialComponents.Tooltip">
+        <item name="android:textColor">#ddd</item>
+    </style>
+
+    <style name="SliderTooltip" parent="Widget.MaterialComponents.Tooltip">
+        <item name="android:textAppearance">@style/SliderTooltipTextStyle</item>
+        <item name="backgroundTint">#df2b2b2b</item>
+    </style>
+
+    <style name="Widget.MaterialComponents.Button.OutlinedButton.Sell" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="cornerFamilyTopRight">cut</item>
+        <item name="cornerFamilyBottomRight">cut</item>
+        <item name="cornerFamilyTopLeft">cut</item>
+        <item name="cornerFamilyBottomLeft">cut</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+
+    <style name="Widget.Design.FloatingActionButton.Cut" parent="Widget.Design.FloatingActionButton">
+        <item name="cornerFamily">cut</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+
+    <style name="Widget.MaterialComponents.CornerCut" parent="Widget.MaterialComponents.Button">
+        <item name="cornerFamily">cut</item>
+    </style>
+
+    <!-- Define a few fixes for the default DayNight theme (upstream UI is always Light) -->
+    <style name="snackbar_style_day_night_fix" parent="@style/Widget.MaterialComponents.Snackbar">
+        <item name="android:background">#2b2b2b</item>
+    </style>
+
+    <style name="snackbar_button_day_night_fix" parent="@style/Widget.MaterialComponents.Button">
+        <item name="backgroundTint">?colorSurface</item>
+        <item name="android:textColor">?colorOnSurface</item>
+    </style>
+
+    <style name="snackbar_text_day_night_fix" parent="@style/Widget.MaterialComponents.Snackbar.TextView">
+        <item name="android:textColor">?colorOnSurface</item>
+    </style>
+
+    <!-- Alternative approach allows us to patch all default instances to override when building -->
+    <style name="Widget.MaterialComponents.Chip.Filter" parent="Base.Widget.MaterialComponents.Chip"
+        tools:override="true">
+        <!-- Must also redefine the normal defaults -->
+        <item name="android:checkable">true</item>
+        <item name="chipIconVisible">false</item>
+        <item name="closeIconVisible">false</item>
+        <item name="checkedIcon">@drawable/ic_mtrl_chip_checked_diamond</item>
+    </style>
+
+    <!-- Define the base style for our custom number pad buttons -->
+    <style name="NumberPadButton" parent="Widget.MaterialComponents.Button.TextButton">
+        <item name="android:fontFamily">@font/titillium_web</item>
+        <item name="android:textSize">36sp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:padding">0dp</item>
+    </style>
+
+    <!--  If the theme color is too much for the TabBar navigation, we can force to white -->
+    <style name="AppTabNavigation" parent="Widget.MaterialComponents.TabLayout.Colored">
+        <item name="tabTextColor">@color/color_selector_on_primary</item>
+        <item name="tabIconTint">@color/color_selector_on_primary</item>
+    </style>
+
+    <!-- Effects buttons and Outlined box Text Field -->
+    <style name="AppShapeAppearance.SmallComponent" parent="ShapeAppearance.MaterialComponents.LargeComponent">
+        <item name="cornerFamily">cut</item>
+        <!--        <item name="cornerFamilyBottomLeft">rounded</item>-->
+        <!--        <item name="cornerFamilyTopRight">rounded</item>-->
+        <item name="cornerSize">8dp</item>
+    </style>
+
+    <style name="AppShapeAppearance.MediumComponent" parent="ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerFamily">cut</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+
+    <style name="AppBottomNavigation" parent="Widget.MaterialComponents.BottomNavigationView" />
+
+    <style name="AppTheme.CardItem" parent="Widget.MaterialComponents.CardView">
+        <item name="cardElevation">8dp</item>
+    </style>
+
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+</resources>

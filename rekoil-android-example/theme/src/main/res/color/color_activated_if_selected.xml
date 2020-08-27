@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  State selector to illustrate android tint colors via drawable state.
+
+  This stateful color resource adapts for the standard theme attributes for reusability.
+ -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="?attr/colorControlActivated" android:state_selected="true" />
+    <item android:color="@color/white" />
+</selector>

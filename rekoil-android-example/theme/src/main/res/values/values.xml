@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:ns1="urn:oasis:names:tc:xliff:document:1.2" xmlns:ns2="http://schemas.android.com/tools">
+
+    <!-- Define a style for the AppBar text items that will allow multiple TextViews nicely -->
+    <style name="FinanceTheme.AppBarTitleText">
+        <item name="android:fontFamily">@font/montserrat_bold</item>
+        <item name="android:gravity">center</item>
+        <item name="android:minHeight">?actionBarSize</item>
+        <item name="android:padding">16dp</item>
+        <item name="android:paddingEnd">2sp</item>
+        <item name="android:textAppearance">@style/TextAppearance.Widget.AppCompat.Toolbar.Title</item>
+    </style>
+
+    <!-- Define a style that overrides the start padding for additional text in the AppBar -->
+    <style name="FinanceTheme.AppBarTitleText.Secondary" parent="FinanceTheme.AppBarTitleText">
+        <item name="android:paddingStart">0dp</item>
+    </style>
+
+</resources>

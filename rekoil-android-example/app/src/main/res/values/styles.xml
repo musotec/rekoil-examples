@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App theme, that extends our :theme module's theme -->
+    <style name="AppTheme" parent="TastyTheme" >
+        <!-- Here we would add our customization -->
+        <item name="colorControlActivated">@color/colorAccentOrange</item>
+    </style>
+
+    <!-- Dark theme with red accents -->
+    <style name="TastyTheme" parent="FinanceTheme">
+        <item name="flavorIconText">🍒</item>
+        <item name="colorTitleTextSecondary">#FF9E9E9E</item>
+        <item name="colorPrimary">#e22222</item>
+        <item name="colorSurface">#0d0d0d</item>
+        <item name="android:statusBarColor">#000000</item>
+        <item name="android:colorBackground">#000000</item>
+        <item name="android:navigationBarColor">#000000</item>
+        <item name="colorSecondary">#90FF2E</item>
+        <item name="colorAccent">#FFFFFF</item>
+        <item name="colorError">#e22222</item>
+        <item name="colorSuccess">#90FF2E</item>
+    </style>
+
+    <!-- Child theme which overrides values of parent to specify that we do not have an ActionBar -->
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <!-- For our theme, define a cut in the top left corner to give us more distinct branding -->
+    <style name="ShapeAppearance.Card" parent="ShapeAppearance.MaterialComponents">
+        <item name="cornerFamily">cut</item>
+
+        <item name="cornerSizeTopLeft">@dimen/app_bar_cut_size</item>
+        <item name="cornerSizeTopRight">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+    </style>
+</resources>

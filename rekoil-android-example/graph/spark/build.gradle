@@ -1,0 +1,47 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
+
+android {
+    compileSdkVersion compile_sdk_version
+
+    defaultConfig {
+        minSdkVersion min_sdk_version
+        targetSdkVersion compile_sdk_version
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    buildFeatures {
+        dataBinding = true // dataBinding for easy property binding
+    }
+
+    // needed for kotlin extension libraries, which are compiled against java 1.8
+    compileOptions {
+        sourceCompatibility = java_version
+        targetCompatibility = java_version
+    }
+
+    kotlinOptions {
+        jvmTarget = java_version
+    }
+}
+
+dependencies {
+    api "tech.muso.rekoil:rekoil-jvm:0.0.2"
+
+    implementation libraries
+
+    testImplementation testLibraries
+    androidTestImplementation androidTestLibraries
+}

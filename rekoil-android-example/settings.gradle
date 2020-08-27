@@ -1,0 +1,4 @@
+include ':graph:spark'
+include ':theme'
+include ':app'
+rootProject.name = "android-rekoil-demo"

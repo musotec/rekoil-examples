@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#715096</color>
+    <color name="colorPrimaryDark">#533080</color>
+    <color name="colorSecondary">#8bbc53</color>
+    <color name="colorSecondaryVariant">#935096</color>
+    <color name="colorAccent">#c45b8a</color>
+    <color name="colorBackground">#121212</color>
+
+    <!-- 8% colorPrimary overlaid on #121212 (colorPrimary here is #c45b8a) -->
+    <!-- per the design spec:   https://material.io/design/color/dark-theme.html#properties -->
+    <color name="colorBrandSurface">#20181B</color>
+
+    <color name="black">#ff000000</color>
+    <color name="white">#ffffffff</color>
+</resources>
