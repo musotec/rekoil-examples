@@ -208,6 +208,8 @@ class LineGraphView(context: Context, attrs: AttributeSet) : View(context, attrs
             return selector {
                 // get the scale type, which specifies what computation to perform.
                 val scaleType = get(adapter.scaleType)
+                // also get the data to register on data change
+                get(adapter.data)
 
                 // when type changes, remove any of our nodes from prior mode
                 if (scaleType != Line.ScaleMode.GLOBAL) {
