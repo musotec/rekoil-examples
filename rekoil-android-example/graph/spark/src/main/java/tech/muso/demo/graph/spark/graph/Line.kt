@@ -19,6 +19,7 @@ import tech.muso.rekoil.core.launch
 import tech.muso.rekoil.ktx.getValue
 import tech.muso.rekoil.ktx.setValue
 import kotlin.math.abs
+import kotlin.math.max
 
 data class Line private constructor(private val rekoilScope: RekoilScope, private val builder: Builder) {
 
@@ -195,14 +196,18 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
         ClipType.CLIP_ABOVE
 
     // NOTE: points for paths are relative to the min and max of the graph; scaled from 0 to 1
-    private var dataPath =
-        Path()  // the path of the actual data; represents end state
     private var renderPath =
         Path()  // the current path drawn on the screen.
     private var fillPath =
         Path()  // the current path for the entire fill area.
     private var clipPath =
         Path()  // the current path for clipping other lines
+
+    val resolutionX = viewDimensions.width
+    val resolutionY = viewDimensions.height
+
+    private var renderLinesFloatArray: FloatArray
+            = FloatArray(0)
 
     init {
         rekoilScope.launch {
@@ -213,9 +218,20 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
                 linePaint.color = color
                 linePaint.strokeWidth = width
 
-                Log.i("LINE", "#$identifier - set line color: ${Integer.toHexString(color)}, width: $width")
+                Log.i("LINE", "#$identifier - set line color: " +
+                        "${Integer.toHexString(color)}, width: $width")
 
                 adapter.redraw()
+            }
+
+            // selector for monitoring the view size
+            selector {
+                // when view dimensions change, update the size of the float array
+                val width = get(adapter.globals.viewDimensions).width.toInt()
+                // if our width is larger; render float array has form ([x0 y0 x1 y1 ...])
+                if (width * 4 > renderLinesFloatArray.size) {
+                    renderLinesFloatArray = FloatArray(width * 4)
+                }
             }
         }
     }
@@ -289,7 +305,8 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
         // TODO: improve readability by using builder pattern.
         animator.animatePathToDataSet(computedFinalPath, onAnimationFinished) {
             // do on animation frame
-            convertPointsToRenderPath(renderedPoints)
+//            convertPointsToRenderPath(renderedPoints)
+            convertPointsToRenderArray(renderedPoints)
             adapter.redraw()
         }.start()
     }
@@ -323,9 +340,33 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
         fillPath.reset()
         Log.e("Line", "#$identifier populateRenderingPath()")
         computeRenderingPath(rawDataPoints, renderedPoints)
-        convertPointsToRenderPath(renderedPoints)
+        convertPointsToRenderArray(renderedPoints)
+//        convertPointsToRenderPath(renderedPoints)
         adapter.validate()
         adapter.redraw()
+    }
+
+    private var sublineCount = 0    // should always equal rawDataPoints-1
+
+    private fun convertPointsToRenderArray(renderPoints: MutableList<PointF>) {
+        if (renderPoints.isEmpty() || renderLinesFloatArray.isEmpty()) return
+
+        val lineCount = rawDataPoints.size - 1
+        var index = 0
+        sublineCount = 0    // TODO: remove extraneous variable
+        for (i in 0 until lineCount) {
+            val startPoint = renderPoints[i]
+            val endPoint = renderPoints[i+1]
+            val x0 = startPoint.x
+            val y0 = startPoint.y
+            val x1 = endPoint.x
+            val y1 = endPoint.y
+            renderLinesFloatArray[index++] = x0
+            renderLinesFloatArray[index++] = y0
+            renderLinesFloatArray[index++] = x1
+            renderLinesFloatArray[index++] = y1
+            sublineCount++
+        }
     }
 
     /**
@@ -593,6 +634,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
         //  and then pre-compute on the animation cycles only the keyframes that we will need for the next draw.
         animateFrame = true
 
-        canvas.drawPath(renderPath, linePaint)
+        canvas.drawLines(renderLinesFloatArray, 0, sublineCount shl 2, linePaint)
+//        if (identifier == 0) Log.i("RENDERARRAY", "drew $sublineCount lines")
     }
 }
