@@ -92,6 +92,8 @@ class LineRekoilAdapter(
         Line.ScaleMode.GLOBAL
     }
 
+    val connectPoints: Atom<Boolean> = atom { true }
+
     val alignmentInfo: Atom<HorizontalGuideline> = atom {
         HorizontalGuideline()
     }

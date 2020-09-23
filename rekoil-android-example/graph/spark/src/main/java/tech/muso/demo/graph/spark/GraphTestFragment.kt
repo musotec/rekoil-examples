@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.CompoundButton
 import android.widget.RadioGroup
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.BlendModeColorFilterCompat
@@ -16,14 +17,18 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.radiobutton.MaterialRadioButton
+import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
 import kotlinx.coroutines.*
 import tech.muso.demo.graph.spark.graph.Line
+import tech.muso.demo.graph.spark.helpers.compose
+import tech.muso.demo.graph.spark.helpers.generate
 import tech.muso.rekoil.core.Atom
 import tech.muso.rekoil.core.RekoilScope
 import tech.muso.rekoil.core.Selector
 import tech.muso.rekoil.core.launch
+import java.lang.Math.*
 import java.util.*
 
 /**
@@ -56,7 +61,6 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
                 base += random.nextGaussian().toFloat() * ((i % 4) + 1)
                 base
             }
-//            line.data.value = listOf() // "clear"
             line.data.value = data.mapIndexed { index, y -> PointF(index.toFloat(), y) }
             line.scaleType.value = Line.ScaleMode.ALIGN_START
         }
@@ -94,6 +98,34 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
             val radioAlign = rootView.findViewById<MaterialRadioButton>(R.id.radioButton3)
 
             val buttonRandomize = rootView.findViewById<Button>(R.id.randomize_button)
+            val switchConnectPoints = rootView.findViewById<SwitchMaterial>(R.id.switch_connect_points)
+
+            fun updateUiState(selectedLine: LineRekoilAdapter) {
+                // detach listeners
+                switchConnectPoints.setOnCheckedChangeListener(null)
+
+                // update ui state
+                selectedLine.scaleType.apply {
+                    // remove existing listener.
+                    radioGroup.setOnCheckedChangeListener(null)
+                    // update radio buttons for new line status.
+                    when (value) {
+                        Line.ScaleMode.FIT -> radioFit.isChecked = true
+                        Line.ScaleMode.GLOBAL -> radioGlobal.isChecked = true
+                        Line.ScaleMode.ALIGN_START -> radioAlign.isChecked = true
+                        else -> {}
+                    }
+                }
+
+                // update connected status
+                switchConnectPoints.isChecked = selectedLine.connectPoints.value
+
+                // reattach listeners
+                switchConnectPoints.setOnCheckedChangeListener { _, isChecked ->
+                    selectedLine.connectPoints.value = isChecked
+                    selectedLine.redraw()
+                }
+            }
 
             radioFit.text = "Fit"
             radioGlobal.text = "Global"
@@ -152,6 +184,9 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
                 // selector to perform changes whenever line adapter changes.
                 selector {
                     val adapter = get(currentLineAdapter)
+
+                    adapter?.let { updateUiState(it) }
+
                     // update for new scale type
                     adapter?.scaleType?.apply {
                         // remove existing listener.
@@ -263,6 +298,21 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
                                             index.toFloat(),
                                             9040.toFloat() + value
                                         )
+                                    }
+                                }
+                            } else {
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    delay(1000)
+                                    when (identifier) {
+                                        0 -> data = (0..360).generate(
+                                            compose(::sin, ::toRadians)
+                                        ).mapIndexed { i, y -> PointF(i.toFloat(), 500f * y) }
+                                        1 -> data = (0..360).generate(
+                                            compose(::cos, ::toRadians)
+                                        ).mapIndexed { i, y -> PointF(i.toFloat(), 250f * y)}
+//                                        2 -> data = (0..360).generate(
+//                                            compose(compose(::sin, ::toRadians), ::cos)
+//                                        ).mapIndexed { i, y -> PointF(i.toFloat(), 250f * y)}
                                     }
                                 }
                             }

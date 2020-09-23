@@ -18,6 +18,7 @@ import tech.muso.rekoil.core.RekoilScope
 import tech.muso.rekoil.core.launch
 import tech.muso.rekoil.ktx.getValue
 import tech.muso.rekoil.ktx.setValue
+import java.lang.IndexOutOfBoundsException
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -191,6 +192,8 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
     var scaleMode: ScaleMode by adapter.scaleType
     private var viewDimensions: ViewDimensions by adapter.globals.viewDimensions
 
+    private var drawLines: Boolean by adapter.connectPoints
+
     @ClipType
     var clipType: Int =
         ClipType.CLIP_ABOVE
@@ -206,7 +209,22 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
     val resolutionX = viewDimensions.width
     val resolutionY = viewDimensions.height
 
+    /*
+     *  An array of points formatted for use by Canvas.drawLines(pts, paint)
+     *  expected form [x0 y0 x1 y1 x1 y1 x2 y2 ... xn yn]
+     *
+     *  x0 y0 x1 y1 defines the first line, from the 1st to 2nd point
+     *  x1 y1 x2 y2 defines the next line, from the 2nd to 3rd point
+     *  etc.
+     */
     private var renderLinesFloatArray: FloatArray
+            = FloatArray(0)
+
+    /*
+     * An array of points to be used by Canvas.drawPoints(pts, paint)
+     * expected form [x0 y0 x1 y1 x2 y2 ... xn yn]
+     */
+    private var renderPointsFloatArray: FloatArray
             = FloatArray(0)
 
     init {
@@ -231,6 +249,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
                 // if our width is larger; render float array has form ([x0 y0 x1 y1 ...])
                 if (width * 4 > renderLinesFloatArray.size) {
                     renderLinesFloatArray = FloatArray(width * 4)
+                    renderPointsFloatArray = FloatArray(width * 2)  // also update points
                 }
             }
         }
@@ -353,19 +372,28 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
 
         val lineCount = rawDataPoints.size - 1
         var index = 0
+        var j = 0
         sublineCount = 0    // TODO: remove extraneous variable
-        for (i in 0 until lineCount) {
-            val startPoint = renderPoints[i]
-            val endPoint = renderPoints[i+1]
-            val x0 = startPoint.x
-            val y0 = startPoint.y
-            val x1 = endPoint.x
-            val y1 = endPoint.y
-            renderLinesFloatArray[index++] = x0
-            renderLinesFloatArray[index++] = y0
-            renderLinesFloatArray[index++] = x1
-            renderLinesFloatArray[index++] = y1
-            sublineCount++
+        try {
+            for (i in 0 until lineCount) {
+                val startPoint = renderPoints[i]
+                val endPoint = renderPoints[i + 1]
+                val x0 = startPoint.x
+                val y0 = startPoint.y
+                val x1 = endPoint.x
+                val y1 = endPoint.y
+                renderLinesFloatArray[index++] = x0
+                renderPointsFloatArray[j++] = x0
+
+                renderLinesFloatArray[index++] = y0
+                renderPointsFloatArray[j++] = y0
+
+                renderLinesFloatArray[index++] = x1
+                renderLinesFloatArray[index++] = y1
+                sublineCount++
+            }
+        } catch (ex: IndexOutOfBoundsException) {
+            return  // can occur when converting and array size changes asynchronously
         }
     }
 
@@ -634,7 +662,11 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
         //  and then pre-compute on the animation cycles only the keyframes that we will need for the next draw.
         animateFrame = true
 
-        canvas.drawLines(renderLinesFloatArray, 0, sublineCount shl 2, linePaint)
+        if (drawLines) {
+            canvas.drawLines(renderLinesFloatArray, 0, sublineCount shl 2, linePaint)
+        } else {
+            canvas.drawPoints(renderPointsFloatArray, 0, sublineCount shl 1, linePaint)
+        }
 //        if (identifier == 0) Log.i("RENDERARRAY", "drew $sublineCount lines")
     }
 }
