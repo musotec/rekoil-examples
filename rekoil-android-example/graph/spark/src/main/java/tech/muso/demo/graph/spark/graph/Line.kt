@@ -20,7 +20,6 @@ import tech.muso.rekoil.ktx.getValue
 import tech.muso.rekoil.ktx.setValue
 import java.lang.IndexOutOfBoundsException
 import kotlin.math.abs
-import kotlin.math.max
 
 data class Line private constructor(private val rekoilScope: RekoilScope, private val builder: Builder) {
 
@@ -61,8 +60,8 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
     // minimum and maximum values on the graph
     public val max: Float get() = adapter.max.value ?: 0f
     public val min: Float get() = adapter.min.value ?: 0f
-    public val start: PointF get() = adapter.start
-    public val end: PointF get() = adapter.end
+    public val start: PointF get() = adapter.start.value ?: PointF()
+    public val end: PointF get() = adapter.end.value ?: PointF()
     public val range: Float get() = max - min
 
     init {
@@ -235,6 +234,15 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
                 val width = get(lineWidthAtom)
                 linePaint.color = color
                 linePaint.strokeWidth = width
+
+                // update axis paints
+                adapter.axisArray.forEach {
+                    it.paint.apply {
+                        this.color = color
+                        this.alpha = 0x7f
+                        this.strokeWidth = width/2
+                    }
+                }
 
                 Log.i("LINE", "#$identifier - set line color: " +
                         "${Integer.toHexString(color)}, width: $width")
@@ -657,6 +665,10 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
 //            LineGraphView.TAG,
 //            "draw($canvas)[${viewDimensions.width} x ${viewDimensions.height}] #$identifier range: ($min, $max) d[$range] (start: ${start.y}, end: ${end.y})"
 //        )
+
+        adapter.axisArray.forEach {
+            it.draw(canvas, viewDimensions, this::computeRenderingPath)
+        }
 
         // TODO: Determine how long the render takes to convert to path + fill for the area;
         //  and then pre-compute on the animation cycles only the keyframes that we will need for the next draw.

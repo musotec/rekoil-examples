@@ -2,6 +2,7 @@ package tech.muso.demo.graph.spark
 
 import android.graphics.PointF
 import android.util.Log
+import tech.muso.demo.graph.spark.graph.Axis
 import tech.muso.demo.graph.spark.graph.Line
 import tech.muso.demo.graph.spark.types.*
 import tech.muso.rekoil.core.*
@@ -54,8 +55,16 @@ class LineRekoilAdapter(
         listOf<PointF>()
     }
 
-    val start: PointF get() = data.value.first()
-    val end: PointF get() = data.value.last()
+    val start: Selector<PointF?> = selector {
+        get(data).first().also {
+            // and update the axis while we are here
+            axisArray.first().position = it.y
+        }
+    }
+
+    val end: Selector<PointF?> = selector {
+        get(data).last()
+    }
 
     val max: Selector<Float?> = selector {
         get(data).maxBy { point -> point.y }?.y ?: 0f
@@ -63,6 +72,16 @@ class LineRekoilAdapter(
 
     val min: Selector<Float?> = selector {
         get(data).minBy { point -> point.y }?.y ?: 0f
+    }
+
+    val axisArray: MutableList<Axis> = mutableListOf<Axis>().apply {
+        add(Axis(0f, true))
+    }
+
+    init {
+        selector {
+
+        }
     }
 
     // TODO:
