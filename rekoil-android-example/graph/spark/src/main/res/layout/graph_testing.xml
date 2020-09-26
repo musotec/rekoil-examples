@@ -18,7 +18,7 @@
         <tech.muso.demo.graph.spark.LineGraphView
             android:id="@+id/sparkLineGraph"
             android:layout_width="0dp"
-            android:layout_height="300dp"
+            android:layout_height="250dp"
             android:layout_margin="8dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -27,68 +27,62 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/reset_button"
             style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
             android:text="reset all"
-            app:layout_constraintStart_toEndOf="@+id/randomize_button"
-            app:layout_constraintTop_toBottomOf="@+id/tabs" />
+            app:layout_constraintEnd_toEndOf="@+id/tabs"
+            app:layout_constraintStart_toStartOf="@+id/outer_guideline"
+            app:layout_constraintTop_toBottomOf="@+id/randomize_button" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/randomize_button"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
             android:text="randomize"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="@+id/tabs"
+            app:layout_constraintStart_toStartOf="@+id/outer_guideline"
             app:layout_constraintTop_toBottomOf="@+id/tabs" />
 
         <com.google.android.material.chip.Chip
-            android:id="@+id/choiceChip"
-            style="@style/Widget.MaterialComponents.Chip.Choice"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:text="Choice Chip"
-            app:layout_constraintStart_toEndOf="@+id/filterChip"
-            app:layout_constraintTop_toTopOf="@+id/filterChip" />
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/filterChip"
+            android:id="@+id/chip_clip"
             style="@style/Widget.MaterialComponents.Chip.Filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:text="Filter Chip"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/randomize_button" />
+            android:layout_marginTop="8dp"
+            android:text="Clip"
+            app:layout_constraintBottom_toBottomOf="@+id/randomize_button"
+            app:layout_constraintStart_toStartOf="@+id/tabs"
+            app:layout_constraintTop_toTopOf="@+id/randomize_button" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chip_fill"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Fill Selection"
+            app:layout_constraintBottom_toTopOf="@+id/card"
+            app:layout_constraintStart_toStartOf="@+id/tabs"
+            app:layout_constraintTop_toBottomOf="@+id/switch_label" />
+
+        <TextView
+            android:id="@+id/switch_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Connect Points"
+            app:layout_constraintBottom_toBottomOf="@+id/switch_connect_points"
+            app:layout_constraintEnd_toStartOf="@+id/switch_connect_points"
+            app:layout_constraintTop_toTopOf="@+id/switch_connect_points" />
 
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/switch_connect_points"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
             android:checked="true"
-            app:layout_constraintEnd_toEndOf="@+id/tabs"
-            app:layout_constraintStart_toEndOf="@+id/reset_button"
+            app:layout_constraintEnd_toStartOf="@+id/randomize_button"
             app:layout_constraintTop_toBottomOf="@+id/tabs"
             tools:visibility="visible" />
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/filledBoxTextField"
-            android:layout_width="240dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:hint="Filled Box Text Field"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/card">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:text="Text" />
-
-        </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/floatingActionButton"
@@ -111,104 +105,225 @@
 
         </com.google.android.material.tabs.TabLayout>
 
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/outer_guideline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.655" />
+
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/card"
             android:layout_width="0dp"
-            android:layout_height="160dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/filterChip"
+            android:layout_height="208dp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintEnd_toEndOf="@+id/tabs"
+            app:layout_constraintStart_toStartOf="@+id/tabs"
+            app:layout_constraintTop_toBottomOf="@+id/reset_button"
             tools:visibility="visible">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <RadioGroup
-                    android:id="@+id/scale_type_radio_group"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="@+id/guideline"
-                    app:layout_constraintTop_toTopOf="parent">
-
-                    <com.google.android.material.radiobutton.MaterialRadioButton
-                        android:id="@+id/radioButton1"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Radio Button"
-                        app:layout_constraintBottom_toTopOf="@+id/radioButton2"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="@+id/guideline"
-                        app:layout_constraintTop_toTopOf="parent" />
-
-                    <com.google.android.material.radiobutton.MaterialRadioButton
-                        android:id="@+id/radioButton2"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Radio Button"
-                        app:layout_constraintBottom_toTopOf="@+id/radioButton3"
-                        app:layout_constraintStart_toStartOf="@+id/radioButton1"
-                        app:layout_constraintTop_toBottomOf="@+id/radioButton1" />
-
-                    <com.google.android.material.radiobutton.MaterialRadioButton
-                        android:id="@+id/radioButton3"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Radio Button"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="@+id/radioButton1"
-                        app:layout_constraintTop_toBottomOf="@+id/radioButton2" />
-                </RadioGroup>
                 <androidx.constraintlayout.widget.Guideline
                     android:id="@+id/guideline"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    app:layout_constraintGuide_percent="0.60" />
+                    app:layout_constraintGuide_percent="0.66" />
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardView"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:backgroundTint="#5faaaaaa"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="@+id/guideline"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <RadioGroup
+                        android:id="@+id/scale_type_radio_group"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="@+id/guideline"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <TextView
+                            android:id="@+id/textView"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:padding="8dp"
+                            android:text="Scale:"
+                            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.radiobutton.MaterialRadioButton
+                            android:id="@+id/radioButton2"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:text="Radio Button"
+                            app:layout_constraintBottom_toTopOf="@+id/radioButton3"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toBottomOf="@+id/radioButton1" />
+
+                        <com.google.android.material.radiobutton.MaterialRadioButton
+                            android:id="@+id/radioButton1"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:text="Radio Button"
+                            app:layout_constraintBottom_toTopOf="@+id/radioButton2"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <com.google.android.material.radiobutton.MaterialRadioButton
+                            android:id="@+id/radioButton3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:text="Radio Button"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toBottomOf="@+id/radioButton2" />
+
+                    </RadioGroup>
+                </androidx.cardview.widget.CardView>
 
                 <TextView
-                    android:id="@+id/textView"
+                    android:id="@+id/point_label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/live_info_display_margin"
-                    android:layout_marginTop="@dimen/live_info_display_margin"
-                    android:text="TextView"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="16dp"
+                    android:text="Selection Points:"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                    android:textStyle="bold"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
 
                 <TextView
-                    android:id="@+id/textView2"
+                    android:id="@+id/end_point"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="@dimen/live_info_display_margin"
-                    android:text="TextView"
-                    app:layout_constraintEnd_toStartOf="@+id/guideline"
-                    app:layout_constraintHorizontal_bias="1.0"
-                    app:layout_constraintStart_toEndOf="@+id/textView"
-                    app:layout_constraintTop_toTopOf="@+id/textView" />
-                <TextView
-                    android:id="@+id/textView3"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/live_info_display_margin"
                     android:layout_marginTop="8dp"
-                    android:text="TextView"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/textView2" />
+                    android:layout_marginEnd="16dp"
+                    android:text="(16.00, 190.0)"
+                    app:layout_constraintEnd_toStartOf="@+id/guideline"
+                    app:layout_constraintTop_toBottomOf="@+id/point_label" />
 
                 <TextView
-                    android:id="@+id/textView4"
+                    android:id="@+id/start_point"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="TextView"
-                    app:layout_constraintEnd_toEndOf="@+id/textView2"
-                    app:layout_constraintHorizontal_bias="1.0"
-                    app:layout_constraintStart_toEndOf="@+id/textView3"
-                    app:layout_constraintTop_toTopOf="@+id/textView3" />
+                    android:layout_marginTop="8dp"
+                    android:text="(16.00, 190.0)"
+                    app:layout_constraintStart_toStartOf="@+id/point_label"
+                    app:layout_constraintTop_toBottomOf="@+id/point_label" />
+
+
+                <TextView
+                    android:id="@+id/integral_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="16dp"
+                    android:text="Integral Approximation:"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/start_point" />
+
+                <TextView
+                    android:id="@+id/trapezoidal_integral_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="16dp"
+                    android:text="12345678910"
+                    app:layout_constraintEnd_toStartOf="@+id/guideline"
+                    app:layout_constraintTop_toBottomOf="@+id/integral_label" />
+
+                <TextView
+                    android:id="@+id/label_delta_x"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Δx"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                    android:textStyle="bold"
+                    app:layout_constraintBottom_toTopOf="@+id/text_delta_x"
+                    app:layout_constraintHorizontal_chainStyle="spread_inside"
+                    app:layout_constraintStart_toStartOf="@+id/integral_label"
+                    app:layout_constraintTop_toBottomOf="@+id/trapezoidal_integral_value"
+                    app:layout_constraintVertical_chainStyle="packed" />
+
+                <TextView
+                    android:id="@+id/label_mean"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="μ (ȳ)"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                    android:textStyle="bold"
+                    app:layout_constraintEnd_toStartOf="@+id/label_variance"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toEndOf="@+id/label_delta_x"
+                    app:layout_constraintTop_toTopOf="@+id/label_delta_x" />
+
+                <TextView
+                    android:id="@+id/label_variance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="σ²"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+                    android:textStyle="bold"
+                    app:layout_constraintEnd_toStartOf="@+id/guideline"
+                    app:layout_constraintHorizontal_bias="0.5"
+                    app:layout_constraintStart_toEndOf="@+id/label_mean"
+                    app:layout_constraintTop_toTopOf="@+id/label_mean" />
+
+                <TextView
+                    android:id="@+id/text_delta_x"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="0.1"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="@+id/label_delta_x"
+                    app:layout_constraintTop_toBottomOf="@+id/label_delta_x" />
+
+                <TextView
+                    android:id="@+id/text_mean"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="91210.3 "
+                    app:layout_constraintStart_toStartOf="@+id/label_mean"
+                    app:layout_constraintTop_toTopOf="@+id/text_delta_x" />
+
+                <TextView
+                    android:id="@+id/text_variance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="100.0"
+                    app:layout_constraintStart_toStartOf="@+id/label_variance"
+                    app:layout_constraintTop_toTopOf="@+id/text_mean" />
+
+                <View
+                    android:id="@+id/line_color_indicator"
+                    android:layout_width="0dp"
+                    android:layout_height="4dp"
+                    android:alpha="0.75"
+                    android:orientation="horizontal"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:background="@color/colorAccentRed" />
+
             </androidx.constraintlayout.widget.ConstraintLayout>
 
         </com.google.android.material.card.MaterialCardView>

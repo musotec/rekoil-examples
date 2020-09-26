@@ -149,7 +149,7 @@ class MorphAnimator(val renderPoints: MutableList<PointF>): Animator() {
                         addAll(it) // add the window
                         // then fill the remaining points
                         for (i in reducedStart until reducedEnd) {
-                            Log.d("AnimateTransition", "Extending point: $it")
+//                            Log.d("AnimateTransition", "Extending point: $it")
                             add(it.last())  // then extend the last index over the empty
                         }
                     }

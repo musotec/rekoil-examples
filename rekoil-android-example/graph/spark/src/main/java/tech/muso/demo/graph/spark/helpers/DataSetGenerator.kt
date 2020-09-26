@@ -5,7 +5,7 @@ import java.lang.Math.sin
 import java.lang.Math.toRadians
 import kotlin.reflect.KFunction1
 
-fun IntRange.generate(f: (Double) -> Double) : List<Float> {
+fun IntProgression.generate(f: (Double) -> Double) : List<Float> {
 //    for (i in 0..100) {
 //        kFunction1(i/100.0)
 //    }

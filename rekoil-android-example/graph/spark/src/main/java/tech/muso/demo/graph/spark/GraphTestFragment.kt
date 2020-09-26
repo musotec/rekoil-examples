@@ -6,16 +6,16 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.CompoundButton
-import android.widget.RadioGroup
+import android.widget.*
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.BlendModeColorFilterCompat
 import androidx.core.graphics.BlendModeCompat
+import androidx.core.graphics.ColorUtils
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.chip.Chip
 import com.google.android.material.radiobutton.MaterialRadioButton
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.material.tabs.TabLayout
@@ -98,11 +98,47 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
             val radioAlign = rootView.findViewById<MaterialRadioButton>(R.id.radioButton3)
 
             val buttonRandomize = rootView.findViewById<Button>(R.id.randomize_button)
-            val switchConnectPoints = rootView.findViewById<SwitchMaterial>(R.id.switch_connect_points)
+            val switchConnectPoints =
+                rootView.findViewById<SwitchMaterial>(R.id.switch_connect_points)
+
+            val colorView = rootView.findViewById<View>(R.id.line_color_indicator)
+
+            val chipClip = rootView.findViewById<Chip>(R.id.chip_clip)
+            val chipFill = rootView.findViewById<Chip>(R.id.chip_fill)
+
+            val textStartPoint = rootView.findViewById<TextView>(R.id.start_point)
+            val textEndPoint = rootView.findViewById<TextView>(R.id.end_point)
+            val textIntegralValue = rootView.findViewById<TextView>(R.id.trapezoidal_integral_value)
+            val textDeltaXValue = rootView.findViewById<TextView>(R.id.text_delta_x)
+            val textMeanValue = rootView.findViewById<TextView>(R.id.text_mean)
+            val textVarianceValue = rootView.findViewById<TextView>(R.id.text_variance)
+
+            var selectionStartPointSubscriber: Job? = null
+            var selectionEndPointSubscriber: Job? = null
+            var colorSubscriber: Job? = null
+            var clipSubscriber: Job? = null
+            var fillSubscriber: Job? = null
+            var connectPointsSubscriber: Job? = null
+            var integralSubscriber: Job? = null
+            var deltaXSubscriber: Job? = null
+            var meanSubscriber: Job? = null
+            var varianceSubscriber: Job? = null
 
             fun updateUiState(selectedLine: LineRekoilAdapter) {
                 // detach listeners
                 switchConnectPoints.setOnCheckedChangeListener(null)
+                chipClip.setOnCheckedChangeListener(null)
+                chipFill.setOnCheckedChangeListener(null)
+                selectionStartPointSubscriber?.cancel()
+                selectionEndPointSubscriber?.cancel()
+                colorSubscriber?.cancel()
+                clipSubscriber?.cancel()
+                fillSubscriber?.cancel()
+                connectPointsSubscriber?.cancel()
+                integralSubscriber?.cancel()
+                deltaXSubscriber?.cancel()
+                meanSubscriber?.cancel()
+                varianceSubscriber?.cancel()
 
                 // update ui state
                 selectedLine.scaleType.apply {
@@ -113,18 +149,63 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
                         Line.ScaleMode.FIT -> radioFit.isChecked = true
                         Line.ScaleMode.GLOBAL -> radioGlobal.isChecked = true
                         Line.ScaleMode.ALIGN_START -> radioAlign.isChecked = true
-                        else -> {}
+                        else -> {
+                        }
                     }
                 }
 
                 // update connected status
                 switchConnectPoints.isChecked = selectedLine.connectPoints.value
+                chipClip.isChecked = selectedLine.clip.value
+                chipFill.isChecked = selectedLine.fill.value
 
                 // reattach listeners
                 switchConnectPoints.setOnCheckedChangeListener { _, isChecked ->
                     selectedLine.connectPoints.value = isChecked
                     selectedLine.redraw()
                 }
+
+                chipFill.setOnCheckedChangeListener { _, isChecked ->
+                    selectedLine.fill.value = isChecked
+                    selectedLine.redraw()
+                }
+
+                chipClip.setOnCheckedChangeListener { _, isChecked ->
+                    selectedLine.clip.value = isChecked
+                    selectedLine.redraw()
+                }
+
+                // and make subscribers
+                selectionStartPointSubscriber = selectedLine.selectionStartPoint.subscribe {
+                    textStartPoint.text =
+                        it?.let { "(${"%.1f".format(it.x)}, ${"%.1f".format(it.y)})" } ?: "N/A"
+                }
+
+                selectionEndPointSubscriber = selectedLine.selectionEndPoint.subscribe {
+                    textEndPoint.text =
+                        it?.let { "(${"%.1f".format(it.x)}, ${"%.1f".format(it.y)})" } ?: "N/A"
+                }
+
+                integralSubscriber = selectedLine.trapezoidalIntegralApprox.subscribe {
+                    textIntegralValue.text = it?.let { "%.3f".format(it) } ?: ""
+                }
+
+                deltaXSubscriber = selectedLine.deltaX.subscribe {
+                    textDeltaXValue.text = it?.let { "%.1f".format(it) } ?: ""
+                }
+
+                meanSubscriber = selectedLine.mean.subscribe {
+                    textMeanValue.text = it?.let { "%.1f".format(it) } ?: ""
+                }
+
+                varianceSubscriber = selectedLine.variance.subscribe {
+                    textVarianceValue.text = it?.let { "%.1f".format(it) } ?: ""
+                }
+
+                fillSubscriber = selectedLine.fill.subscribe { if (chipFill.isChecked != it) chipFill.isChecked = it }
+                clipSubscriber = selectedLine.clip.subscribe { if (chipClip.isChecked != it) chipClip.isChecked = it }
+                connectPointsSubscriber = selectedLine.connectPoints.subscribe { if (switchConnectPoints.isChecked != it) switchConnectPoints.isChecked = it }
+                colorSubscriber = selectedLine.line.lineColorAtom.subscribe { colorView.setBackgroundColor(it) }
             }
 
             radioFit.text = "Fit"
@@ -139,6 +220,7 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
             rekoilScope.launch {
                 // create a line selection atom
                 val selectedLineIndex: Atom<Int> = atom { 0 }
+
                 // and an OnTabSelectedListener to serve as an adapter
                 class LinesOnTabSelectedListener(
                     val selectedIndexAtom: Atom<Int>
@@ -154,7 +236,7 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
                 }
 
                 val currentLineAdapter: Selector<LineRekoilAdapter?> = selector {
-                    // if index or line array changes, then update our current line.
+                    // if index or line array changes, then update our current line
                     val currentIndex = get(selectedLineIndex)
                     val lineList = get(lines)!!
                     return@selector lineList[currentIndex]  // return adapter at index.
@@ -196,7 +278,8 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
                             Line.ScaleMode.FIT -> radioFit.isChecked = true
                             Line.ScaleMode.GLOBAL -> radioGlobal.isChecked = true
                             Line.ScaleMode.ALIGN_START -> radioAlign.isChecked = true
-                            else -> { }
+                            else -> {
+                            }
                         }
                         // attach new listener to receive updates.
                         radioGroup.setOnCheckedChangeListener { group, checkedId ->
@@ -289,41 +372,111 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
                         .apply {
                             // set identifier
                             identifier = i
+
                             // start demo coroutine
-                            if (identifier == 3) {
-                                CoroutineScope(Dispatchers.IO).launch {
-                                    delay(5000)
-                                    data = (0..500).mapIndexed { index, value ->
-                                        PointF(
-                                            index.toFloat(),
-                                            9040.toFloat() + value
-                                        )
+                            CoroutineScope(Dispatchers.IO).launch {
+                                when (identifier) {
+                                    3 -> {
+                                        delay(5000)
+                                        adapter.data.value = (0..500).mapIndexed { index, value ->
+                                            PointF(
+                                                index.toFloat(),
+                                                9040.toFloat() + value
+                                            )
+                                        }
+                                        delay(1000)
+                                        adapter.scaleType.value = Line.ScaleMode.GLOBAL
                                     }
-                                }
-                            } else {
-                                CoroutineScope(Dispatchers.IO).launch {
-                                    delay(1000)
-                                    when (identifier) {
-                                        0 -> data = (0..360).generate(
+                                    0 -> {
+                                        delay(3000)
+                                        adapter.data.value = (0..360 step 2).generate(
                                             compose(::sin, ::toRadians)
-                                        ).mapIndexed { i, y -> PointF(i.toFloat(), 500f * y) }
-                                        1 -> data = (0..360).generate(
+                                        ).mapIndexed { i, y ->
+                                            PointF(
+                                                i.toFloat(),
+                                                500f * y
+                                            )
+                                        }
+
+                                        adapter.fill.value = true
+                                        adapter.connectPoints.value = false
+                                        adapter.clip.value = true
+
+                                        delay(2000)
+                                        val hsl = FloatArray(3)
+                                        ColorUtils.colorToHSL(lineColorAtom.value, hsl)
+                                        val startHue = hsl[0].toInt()
+                                        var t = 0
+                                        for (hue in startHue..startHue+360) {
+                                            val adjustedHue = (hue + 360) % 360
+                                            hsl[0] = adjustedHue.toFloat()
+                                            lineColorAtom.value = ColorUtils.HSLToColor(hsl)
+                                            delay(10)
+                                            t += 10
+                                            if (t > 1000) {
+                                                adapter.scaleType.value = Line.ScaleMode.FIT
+                                            }
+                                        }
+                                    }
+                                    1 -> {
+                                        delay(3800)
+                                        adapter.data.value = (0..360 step 5).generate(
                                             compose(::cos, ::toRadians)
-                                        ).mapIndexed { i, y -> PointF(i.toFloat(), 250f * y)}
-//                                        2 -> data = (0..360).generate(
-//                                            compose(compose(::sin, ::toRadians), ::cos)
-//                                        ).mapIndexed { i, y -> PointF(i.toFloat(), 250f * y)}
+                                        ).mapIndexed { i, y ->
+                                            PointF(
+                                                i.toFloat(),
+                                                250f * y
+                                            )
+                                        }
+
+                                        adapter.fill.value = true
+                                        delay(1500)
+                                        adapter.scaleType.value = Line.ScaleMode.FIT
+                                        delay(900)
+                                        adapter.scaleType.value = Line.ScaleMode.ALIGN_START
+                                        delay(900)
+                                        adapter.scaleType.value = Line.ScaleMode.FIT
+                                        delay(900)
+                                        adapter.scaleType.value = Line.ScaleMode.ALIGN_START
+                                    }
+                                    2 -> {
+                                        delay(5000)
+                                        randomize(adapter)
+                                        delay(200)
+                                        randomize(adapter)
+                                    }
+                                    6 -> {
+                                        delay(7000)
+                                        adapter.scaleType.value = Line.ScaleMode.FIT
+                                        delay(500)
+                                        adapter.connectPoints.value = false
                                     }
                                 }
                             }
                         }
                 }
 
-                invalidate()
-            }
+                fun resetAllLines() {
+                    lines.value?.let { lines -> initializeGraph(lines) }
+                }
 
-            rootView.findViewById<MaterialButton>(R.id.reset_button).setOnClickListener {
-                lines.value?.let { lines -> initializeGraph(lines) }
+                CoroutineScope(Dispatchers.IO).launch {
+                    delay(2500)
+                    // do something.
+                    val (start, end) = Pair(0.15f, 0.85f)
+                    var pct = start
+                    while (pct < end) {
+                        graphView.debugSetScrubPosition(pct)
+                        pct += 0.01f
+                        delay(50)
+                    }
+                   delay(6000)
+//                    resetAllLines()
+                }
+
+                rootView.findViewById<MaterialButton>(R.id.reset_button).setOnClickListener {
+                    resetAllLines()
+                }
             }
         }
     }

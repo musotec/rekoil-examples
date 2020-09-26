@@ -6,6 +6,7 @@ import android.view.View
 import androidx.annotation.ColorInt
 import androidx.core.graphics.withSave
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import tech.muso.demo.graph.spark.types.annotation.FillType
 import tech.muso.demo.graph.spark.types.annotation.ClipType
 import tech.muso.demo.graph.spark.LineGraphView
@@ -34,18 +35,6 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
     val id = View.generateViewId()  // generate an id for this line, such that it does not resolve to any view ids
 
     val adapter: LineRekoilAdapter = builder.adapter
-
-    var data: List<PointF>
-        get() = adapter.data.value
-        set(value) {
-            // TODO: rethink this if statement
-            if (adapter.data.value.isEmpty()) {
-                adapter.data.value = value
-                populateRenderingPath() // when data initially set, immediately populate render path
-            } else {
-                adapter.data.value = value
-            }
-        }
 
     // TODO: investigate custom delegates
     private val globalAxisMin: Float
@@ -85,11 +74,11 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
             // selector to handle data invalidation
             val dataSelector = selector {
                 // trigger on the following atoms
-                get(adapter.data) // if data changes
-
+                get(adapter.data) // if data changes, start animation
                 // work to do for rendering change
                 populateDataPath()  // update the data for the animation
 
+                // NOTE: do not update rendering path, else animation completes instantly.
                 Log.i("SELECTOR", "#${identifier} populateDataPath()")
             }
 
@@ -116,6 +105,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
 
                 Log.w("SELECTOR", "#${identifier} animateTransition - scaleSelector: $scale")
 
+
                 // then re-render the path, animating the transition
                 animateTransition {
                     populateRenderingPath()
@@ -133,7 +123,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
     private val lineWidthAtom: Atom<Float> = rekoilScope.atom { builder.lineWidth }
     var lineWidth: Float by lineWidthAtom
 
-    private val fillTypeAtom: Atom<Int> = rekoilScope.atom { FillType.DOWN }
+    private val fillTypeAtom: Atom<Int> = rekoilScope.atom { FillType.TOWARD_ZERO }
     var fillType: Int by fillTypeAtom
         init {
             rekoilScope.selector {
@@ -234,6 +224,8 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
                 val width = get(lineWidthAtom)
                 linePaint.color = color
                 linePaint.strokeWidth = width
+                fillPaint.color = color
+                fillPaint.alpha = 0x8f  // have to update alpha any time color is changed.
 
                 // update axis paints
                 adapter.axisArray.forEach {
@@ -283,6 +275,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
         set(linePaint)
         style = Paint.Style.FILL
         color = fillColor
+        alpha = 0x8f
         strokeWidth = 0f
     }
 
@@ -332,8 +325,8 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
         // TODO: improve readability by using builder pattern.
         animator.animatePathToDataSet(computedFinalPath, onAnimationFinished) {
             // do on animation frame
-//            convertPointsToRenderPath(renderedPoints)
             convertPointsToRenderArray(renderedPoints)
+            convertPointsToRenderPath(renderedPoints)
             adapter.redraw()
         }.start()
     }
@@ -368,7 +361,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
         Log.e("Line", "#$identifier populateRenderingPath()")
         computeRenderingPath(rawDataPoints, renderedPoints)
         convertPointsToRenderArray(renderedPoints)
-//        convertPointsToRenderPath(renderedPoints)
+        convertPointsToRenderPath(renderedPoints)   // populate path when finished for fill
         adapter.validate()
         adapter.redraw()
     }
@@ -434,7 +427,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
                     Log.d("ComputeRender", "#$identifier generating fillPath start=${renderPoints[0]}, end=${point}")
                 }
 
-                val fillFlags = fillType and FillType.ALL
+                val fillFlags = fillType
                 when(fillFlags) {
                     FillType.DOWN -> {
                         fillPath.lineTo(point.x, viewDimensions.width)
@@ -445,7 +438,9 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
                         fillPath.lineTo(0f, 0f)
                     }
                     FillType.TOWARD_ZERO -> {
-//                        fillPath.lineTo(x, 0f) // TODO: find zero point on graph and bisect.
+                        // TODO: find zero on graph and bisect; avoid suspicious axis assumptions
+                        fillPath.lineTo(point.x, adapter.axisArray[0].renderPoints[0].y)
+                        fillPath.lineTo(0f, adapter.axisArray[0].renderPoints[0].y)
                     }
                     FillType.ALL -> {
                         fillPath.moveTo(0f, 0f)
@@ -506,13 +501,11 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
     /**
      * Populate the rendering path based on the state of the animation.
      */
-    // TODO: make this a selector and change on dependents
-    internal fun computeRenderingPath(dataPoints: List<PointF>, renderPoints: MutableList<PointF> = arrayListOf()): List<PointF> {
-        // todo: clean this up...
+    private fun computeRenderingPath(dataPoints: List<PointF>, renderPoints: MutableList<PointF> = arrayListOf()): List<PointF> {
         val adjustedViewHeight = viewDimensions.height * (1f - topMargin - bottomMargin)
 
-        val xrange: Float = (adapter.count.value?.toFloat() ?: 2f - 1) ?: 1f
-        val xscale = (viewDimensions.width - 2 * lineWidth) / xrange
+        val xrange: Float = adapter.count.value?.toFloat() ?: 1f
+        val xscale = (viewDimensions.width + lineWidth) / xrange
 
         val yscale =  verticalRatio * (adjustedViewHeight - 2 * lineWidth) /
                 if (scaleMode == ScaleMode.FIT) range else (globalAlignGuideline.range)
@@ -538,7 +531,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
         if (logging) {
             when(scaleMode) {
                 ScaleMode.GLOBAL -> {
-                    Log.e("LineScale", "$id GLOBAL Scale: range(min=$globalAxisMax,max=$globalAxisMin)")
+                    Log.e("LineScale", "$id GLOBAL Scale: range(min=$globalAxisMin,max=$globalAxisMax)")
                 }
                 ScaleMode.FIT -> {
                     Log.e("LineScale",  "$id FIT Scale: viewDimensions.height: ${viewDimensions.height}; yscale=$yscale; ytranslation=$ytranslation")
@@ -620,7 +613,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
      */
     fun fillRange(canvas: Canvas, horizontalScrub: GraphRangeSelector, clippedByPaths: List<Path?>? = null) {
         // exit conditions for where there is nothing to fill.
-        if (horizontalScrub.startX == null || fillType == FillType.NONE ||  fillColor == 0 ) return
+        if (!adapter.fill.value || horizontalScrub.startX == null || fillType == FillType.NONE ||  fillColor == 0 ) return
 
         // save current context
         canvas.withSave {
@@ -654,7 +647,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
      * Get the clipping path for other fill regions.
      */
     fun getClipPath(): Path? {
-        if (clipType == ClipType.NONE)
+        if (!adapter.clip.value || clipType == ClipType.NONE)
             return null
         return clipPath
     }

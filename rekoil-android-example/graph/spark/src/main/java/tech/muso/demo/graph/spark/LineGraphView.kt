@@ -98,11 +98,17 @@ class LineGraphView(context: Context, attrs: AttributeSet) : View(context, attrs
         override fun onScrubStart(x: Float, y: Float) {
             scrubListener?.onScrubStateChanged(true)
             graphSelectionRange.startX = x
+            val width: Float = globals.viewDimensions.value.width
+            globals.globalSelectionStartPct.value = x / width
+            globals.globalSelectionEndPct.value   = x / width
             invalidate()
         }
 
         override fun onScrubbed(x: Float, y: Float) {
             graphSelectionRange.endX = x
+            Log.i("SCRUB", "x,y: $x, $y")
+            val width: Float = globals.viewDimensions.value.width
+            globals.globalSelectionEndPct.value = x / width
             invalidate()
         }
 
@@ -121,7 +127,16 @@ class LineGraphView(context: Context, attrs: AttributeSet) : View(context, attrs
         }
     }
 
-    val secondaryGestureDetector: GestureDetector =
+    fun debugSetScrubPosition(percent: Float) {
+        val x = percent * width
+        if (graphSelectionRange.startX == null)
+            _scrubListener.onScrubStart(x, 0f)
+        else
+            _scrubListener.onScrubbed(x, 0f)
+    }
+
+    // NOTE: unused
+    private val secondaryGestureDetector: GestureDetector =
         object : GestureDetector(context, object : SimpleOnGestureListener(){
             override fun onDoubleTap(e: MotionEvent?): Boolean {
                 // TODO: determine double tap action
@@ -153,12 +168,15 @@ class LineGraphView(context: Context, attrs: AttributeSet) : View(context, attrs
 
     // container for atoms that are defined by the graph to be exposed and observed by all lines
     data class GlobalAtoms(val rekoilScope: RekoilScope): RekoilScope by rekoilScope {
-        // TODO: if there are ever read only atoms, use that type instead (don't expose global)
+        // TODO: if there are ever read only atoms, use that type instead (don't expose global write)
         val viewDimensions: Atom<ViewDimensions> = atom { ViewDimensions(0f,0f) }
         val redrawGraph: Atom<Boolean> = atom { true }
         val globalAxisMin: Atom<Float> = atom { 0f }
         val globalAxisMax: Atom<Float> = atom { 0f }
         val globalAlignGuideline: Atom<HorizontalGuideline> = atom { HorizontalGuideline() }
+
+        val globalSelectionStartPct: Atom<Float> = atom { 0f }
+        val globalSelectionEndPct: Atom<Float> = atom { 0f }
 
         // FIXME: currently, this id/size pair is superfluous as the node is stored by the selector
         //   but it is used for debug println of the line id when visualizing the fibonacci heap
@@ -203,13 +221,14 @@ class LineGraphView(context: Context, attrs: AttributeSet) : View(context, attrs
             val currentMaxNode: Atom<Node<NodeIdSizePair<Float>>> = atom { nullNode }
             val currentAboveNode: Atom<Node<NodeIdSizePair<Float>>> = atom { nullNode }
             val currentBelowNode: Atom<Node<NodeIdSizePair<Float>>> = atom { nullNode }
+            var lastData: List<PointF>? = null  // TODO
 
             // selector for obtaining the line information and updating the globals.
             return selector {
                 // get the scale type, which specifies what computation to perform.
                 val scaleType = get(adapter.scaleType)
                 // also get the data to register on data change
-                get(adapter.data)
+                val data = get(adapter.data)
 
                 // when type changes, remove any of our nodes from prior mode
                 if (scaleType != Line.ScaleMode.GLOBAL) {
@@ -247,7 +266,7 @@ class LineGraphView(context: Context, attrs: AttributeSet) : View(context, attrs
                         if (DEBUG_FIB_HEAP) {
                             println("AboveHeap (removed node [${adapter.id}]):")
                             alignmentAboveHeap.visualize()
-                            println("Belowheap (removed node [${adapter.id}]):")
+                            println("BelowHeap (removed node [${adapter.id}]):")
                             alignmentBelowHeap.visualize()
                         }
                     }

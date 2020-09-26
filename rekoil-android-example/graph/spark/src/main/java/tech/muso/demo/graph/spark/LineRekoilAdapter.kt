@@ -6,7 +6,7 @@ import tech.muso.demo.graph.spark.graph.Axis
 import tech.muso.demo.graph.spark.graph.Line
 import tech.muso.demo.graph.spark.types.*
 import tech.muso.rekoil.core.*
-import kotlin.math.roundToInt
+import kotlin.math.abs
 
 /**
  * Contains Attributes for drawing the line on the graph relative to other lines.
@@ -55,6 +55,96 @@ class LineRekoilAdapter(
         listOf<PointF>()
     }
 
+    private val selectionRange = selector {
+        val data = get(data)
+        var startPct = get(globals.globalSelectionStartPct)
+        var endPct = get(globals.globalSelectionEndPct)
+
+        // swap points if they are backwards
+        if (endPct < startPct) {
+            val tmp = startPct
+            startPct = endPct
+            endPct = tmp
+        }
+
+        if (startPct == 0f || endPct == 0f) return@selector LinearDomain(0,0)
+
+        val range = data.last().x - data.first().x
+        val start = range * startPct + data.first().x
+        val end = range * endPct + data.first().x
+
+        var closestStartPointIndex = data.binarySearch { pointF -> pointF.x.compareTo(start) }
+        var closestEndPointIndex = data.binarySearch { pointF -> pointF.x.compareTo(end) }
+
+        // have to adjust because binarySearch returns negative if index not found
+        if (closestStartPointIndex < 0) closestStartPointIndex = -1 * closestStartPointIndex - 1
+        if (closestEndPointIndex < 0) closestEndPointIndex = -1 * closestEndPointIndex - 1
+
+        LinearDomain(closestStartPointIndex, closestEndPointIndex)
+    }
+
+    val selectionStartPoint = selector {
+        val range = get(selectionRange) ?: return@selector null
+        get(data)[range.start]
+    }
+
+    val selectionEndPoint = selector {
+        val range = get(selectionRange) ?: return@selector null
+        get(data)[range.end.coerceIn(0, data.value.size - 1)]
+    }
+
+    val trapezoidalIntegralApprox = selector {
+        val data = get(data)
+        val (closestStartPointIndex, closestEndPointIndex) = get(selectionRange) ?: return@selector null
+
+        // avoid empty case
+        if (closestEndPointIndex - closestStartPointIndex < 2) return@selector null
+
+        Log.w("SELECTOR", "[$id] closestStart: $closestStartPointIndex, closestEnd: $closestEndPointIndex")
+
+        try {
+            val rightHandApprox =
+                data.subList(closestStartPointIndex, closestEndPointIndex).map { p -> p.y }
+                    .reduce { fl, acc ->
+                        fl + acc
+                    }
+            val leftHandApprox =
+                data.subList(closestStartPointIndex + 1, closestEndPointIndex + 1).map { p -> p.y }
+                    .sum()
+
+            return@selector (rightHandApprox + leftHandApprox) / 2f
+        } catch (ignored: Exception) {
+            return@selector null
+        }
+    }
+
+    val deltaX: Selector<Double?> = selector {
+        // FIXME: assumes points equally spaced; x/time axis not actually implemented.
+        val data = get(data)
+        val (closestStartPointIndex, closestEndPointIndex) = get(selectionRange) ?: return@selector null
+        (data[closestEndPointIndex].x - data[closestStartPointIndex].x).toDouble() / (closestEndPointIndex - closestStartPointIndex)
+    }
+
+    val mean: Selector<Double?> = selector {
+        val data = get(data)
+        val (closestStartPointIndex, closestEndPointIndex) = get(selectionRange) ?: return@selector null
+        data.subList(closestStartPointIndex, closestEndPointIndex).run {
+            sumByDouble { it.y.toDouble() } / size
+        }
+    }
+
+    val variance: Selector<Double?> = selector {
+        val data = get(data)
+        val mean = get(mean) ?: return@selector null
+        val (closestStartPointIndex, closestEndPointIndex) = get(selectionRange) ?: return@selector null
+        data.subList(closestStartPointIndex, closestEndPointIndex).run {
+            map {
+                val v = (it.y - mean)
+                return@map v*v
+            }.sum() / (size - 1)
+        }
+    }
+
     val start: Selector<PointF?> = selector {
         get(data).first().also {
             // and update the axis while we are here
@@ -76,17 +166,6 @@ class LineRekoilAdapter(
 
     val axisArray: MutableList<Axis> = mutableListOf<Axis>().apply {
         add(Axis(0f, true))
-    }
-
-    init {
-        selector {
-
-        }
-    }
-
-    // TODO:
-    val selectionDomain: Atom<LinearDomain> = atom {
-        LinearDomain()
     }
 
 //    val lineAttributes: Selector<SparkLineAttributes<Float>?> = selector {
@@ -112,6 +191,8 @@ class LineRekoilAdapter(
     }
 
     val connectPoints: Atom<Boolean> = atom { true }
+    val fill: Atom<Boolean> = atom { false }
+    val clip: Atom<Boolean> = atom { false }
 
     val alignmentInfo: Atom<HorizontalGuideline> = atom {
         HorizontalGuideline()
