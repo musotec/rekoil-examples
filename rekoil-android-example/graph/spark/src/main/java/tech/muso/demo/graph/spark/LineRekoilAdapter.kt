@@ -122,7 +122,7 @@ class LineRekoilAdapter(
         // FIXME: assumes points equally spaced; x/time axis not actually implemented.
         val data = get(data)
         val (closestStartPointIndex, closestEndPointIndex) = get(selectionRange) ?: return@selector null
-        (data[closestEndPointIndex].x - data[closestStartPointIndex].x).toDouble() / (closestEndPointIndex - closestStartPointIndex)
+        (data[closestEndPointIndex].x - data[closestStartPointIndex].x).toDouble()
     }
 
     val mean: Selector<Double?> = selector {

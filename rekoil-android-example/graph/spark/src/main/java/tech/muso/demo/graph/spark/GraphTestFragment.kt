@@ -16,6 +16,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.radiobutton.MaterialRadioButton
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.material.tabs.TabLayout
@@ -91,6 +92,11 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
             val graphView = rootView.findViewById<LineGraphView>(R.id.sparkLineGraph)
             val graphScope = graphView.graphRekoilScope
 
+            val fab = rootView.findViewById<FloatingActionButton>(R.id.floatingActionButton)
+            fab.setOnClickListener {
+//                Alert
+            }
+
             val radioGroup = rootView.findViewById<RadioGroup>(R.id.scale_type_radio_group)
 
             val radioFit = rootView.findViewById<MaterialRadioButton>(R.id.radioButton1)
@@ -98,11 +104,10 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
             val radioAlign = rootView.findViewById<MaterialRadioButton>(R.id.radioButton3)
 
             val buttonRandomize = rootView.findViewById<Button>(R.id.randomize_button)
-            val switchConnectPoints =
-                rootView.findViewById<SwitchMaterial>(R.id.switch_connect_points)
 
             val colorView = rootView.findViewById<View>(R.id.line_color_indicator)
 
+            val chipConnectPoints = rootView.findViewById<Chip>(R.id.chip_connect)
             val chipClip = rootView.findViewById<Chip>(R.id.chip_clip)
             val chipFill = rootView.findViewById<Chip>(R.id.chip_fill)
 
@@ -126,7 +131,7 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
 
             fun updateUiState(selectedLine: LineRekoilAdapter) {
                 // detach listeners
-                switchConnectPoints.setOnCheckedChangeListener(null)
+                chipConnectPoints.setOnCheckedChangeListener(null)
                 chipClip.setOnCheckedChangeListener(null)
                 chipFill.setOnCheckedChangeListener(null)
                 selectionStartPointSubscriber?.cancel()
@@ -155,12 +160,12 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
                 }
 
                 // update connected status
-                switchConnectPoints.isChecked = selectedLine.connectPoints.value
+                chipConnectPoints.isChecked = selectedLine.connectPoints.value
                 chipClip.isChecked = selectedLine.clip.value
                 chipFill.isChecked = selectedLine.fill.value
 
                 // reattach listeners
-                switchConnectPoints.setOnCheckedChangeListener { _, isChecked ->
+                chipConnectPoints.setOnCheckedChangeListener { _, isChecked ->
                     selectedLine.connectPoints.value = isChecked
                     selectedLine.redraw()
                 }
@@ -204,7 +209,7 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
 
                 fillSubscriber = selectedLine.fill.subscribe { if (chipFill.isChecked != it) chipFill.isChecked = it }
                 clipSubscriber = selectedLine.clip.subscribe { if (chipClip.isChecked != it) chipClip.isChecked = it }
-                connectPointsSubscriber = selectedLine.connectPoints.subscribe { if (switchConnectPoints.isChecked != it) switchConnectPoints.isChecked = it }
+                connectPointsSubscriber = selectedLine.connectPoints.subscribe { if (chipConnectPoints.isChecked != it) chipConnectPoints.isChecked = it }
                 colorSubscriber = selectedLine.line.lineColorAtom.subscribe { colorView.setBackgroundColor(it) }
             }
 
