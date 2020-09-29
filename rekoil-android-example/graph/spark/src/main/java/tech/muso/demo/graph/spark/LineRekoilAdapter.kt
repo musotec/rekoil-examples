@@ -157,11 +157,11 @@ class LineRekoilAdapter(
     }
 
     val max: Selector<Float?> = selector {
-        get(data).maxBy { point -> point.y }?.y ?: 0f
+        get(data).maxByOrNull { point -> point.y }?.y ?: 0f
     }
 
     val min: Selector<Float?> = selector {
-        get(data).minBy { point -> point.y }?.y ?: 0f
+        get(data).minByOrNull { point -> point.y }?.y ?: 0f
     }
 
     val axisArray: MutableList<Axis> = mutableListOf<Axis>().apply {

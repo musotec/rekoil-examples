@@ -29,57 +29,11 @@ import java.util.*
 class LineGraphView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
     companion object {
-        const val TAG = "SparkLineGraph"
+        const val TAG = "LineGraphView"
     }
 
-    @Retention(AnnotationRetention.SOURCE)
-    annotation class ScrubMode {
-        companion object {
-            /**
-             * The scrubber constant for the selection mode. This will select the nearest real data point.
-             */
-            var NEAREST = 0
-
-            /**
-             * The scrubber constant for the selection mode. This will select the nearest point on the
-             * spark line.
-             */
-            var APPROXIMATE = 1
-        }
-    }
-
-    var onRangeSelected: () -> Unit = {}
     private val scrubGestureDetector: ScrubGestureDetector
     private val scrubEnabled: Boolean = true
-
-    /**
-     * returns the nearest index (into [.adapter]'s data) for the given x coordinate.
-     */
-    fun getNearestIndex(points: List<Float>, x: Float): Int {
-        var index = Collections.binarySearch(points, x)
-
-        // if binary search returns positive, we had an exact match, return that index
-        if (index >= 0) return index
-
-        // otherwise, calculate the binary search's specified insertion index
-        index = -1 - index
-
-        // if we're inserting at 0, then our guaranteed nearest index is 0
-        if (index == 0) return index
-
-        // if we're inserting at the very end, then our guaranteed nearest index is the final one
-        if (index == points.size) return --index
-
-        // otherwise we need to check which of our two neighbors we're closer to
-        val deltaUp = points[index] - x
-        val deltaDown = x - points[index - 1]
-        if (deltaUp > deltaDown) {
-            // if the below neighbor is closer, decrement our index
-            index--
-        }
-
-        return index
-    }
 
     val graphSelectionRange = GraphRangeSelector()
     var scrubListener: ScrubStateListener? = null
@@ -106,27 +60,20 @@ class LineGraphView(context: Context, attrs: AttributeSet) : View(context, attrs
 
         override fun onScrubbed(x: Float, y: Float) {
             graphSelectionRange.endX = x
-            Log.i("SCRUB", "x,y: $x, $y")
             val width: Float = globals.viewDimensions.value.width
             globals.globalSelectionEndPct.value = x / width
             invalidate()
         }
 
         override fun onScrubEnded() {
-            Log.e("Scrub", "onScrubEnded()")
             scrubListener?.onScrubStateChanged(false)
-                // only zoom if we have a start & end position.
-                // we always have an end position; onScrubbed(x,y) is always called before this
-                if (graphSelectionRange.startX != null) {
-//                    scrubListener?.onRangeSelected(horizontalScrub)
-                    // TODO: return a list of indices so that the adapters for each line can be queried.
-                    onRangeSelected()
-                }
-
             invalidate()
         }
     }
 
+    /*
+     * EXPOSED ONLY FOR DEMO PURPOSES, THIS IS POOR DESIGN IN A REAL APPLICATION!
+     */
     fun debugSetScrubPosition(percent: Float) {
         val x = percent * width
         if (graphSelectionRange.startX == null)
@@ -150,10 +97,6 @@ class LineGraphView(context: Context, attrs: AttributeSet) : View(context, attrs
         scrubGestureDetector = ScrubGestureDetector(_scrubListener, handler, touchSlop, secondaryGestureDetector)
         scrubGestureDetector.setEnabled(scrubEnabled)
         setOnTouchListener(scrubGestureDetector)
-    }
-
-    fun onVibrate() {
-        this.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
     }
 
     private val textureBitmap = BitmapFactory.decodeResource(resources, R.drawable.stripe_tile)

@@ -1,52 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- A custom theme, which can be used by the application.
-        NOTE: no colors were thought out in this theme below.
-     -->
-    <style name="ExampleCustomTheme" parent="Theme.MaterialComponents">
-
-        <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
-        <item name="android:colorBackground">@color/colorBrandSurface</item>
-        <item name="android:statusBarColor">@color/colorPrimaryDark</item>
-        <item name="android:navigationBarColor">@color/colorPrimaryDark</item>
-
-        <item name="colorPrimaryVariant">#000000</item>
-        <item name="colorOnPrimary">#FFFFFF</item>
-        <item name="colorSecondary">@color/colorSecondary</item>
-        <item name="colorSecondaryVariant">@color/colorSecondaryVariant</item>
-        <item name="colorOnSecondary">#FFFFFF</item>
-        <item name="colorError">#F44336</item>
-        <item name="colorOnError">#FFFFFF</item>
-        <item name="colorSurface">#1d1d1d</item>
-        <item name="colorOnSurface">#dfffffff</item>
-<!--        <item name="android:colorBackground">@color/background</item>-->
-<!--        <item name="android:statusBarColor">@color/background</item>-->
-<!--        <item name="android:navigationBarColor">@color/background</item>-->
-        <item name="colorOnBackground">#000</item>
-
-        <!-- Affects buttons and Outlined box Text Field -->
-        <item name="shapeAppearanceSmallComponent">@style/AppShapeAppearance.SmallComponent</item>
-
-
-        <item name="tabStyle">@style/AppTabNavigation</item>
-        <item name="bottomNavigationStyle">@style/AppBottomNavigation</item>
-
-        <!-- Affects CardView -->
-        <item name="shapeAppearanceMediumComponent">@style/AppShapeAppearance.MediumComponent</item>
-    </style>
-
-    <style name="FinanceTheme" parent="Theme.MaterialComponents">
+    <style name="DemoTheme" parent="Theme.MaterialComponents">
         <item name="flavorIconText"> </item>
         <item name="colorTitleTextPrimary">#ffffff</item>
         <item name="colorTitleTextSecondary">#ffffff</item>
-        <item name="titleTextStylePrimary">@style/FinanceTheme.AppBarTitleText</item>
-        <item name="titleTextStyleSecondary">@style/FinanceTheme.AppBarTitleText.Secondary</item>
-
-        <item name="colorShortPrimary">#ffff0000</item>
-        <item name="colorLongPrimary">#ff00ff00</item>
+        <item name="titleTextStylePrimary">@style/DemoTheme.AppBarTitleText</item>
+        <item name="titleTextStyleSecondary">@style/DemoTheme.AppBarTitleText.Secondary</item>
         <!-- Manually override Snackbars theme, as this is not dark in MaterialComponents
           despite the DayNight spec... Implementation behind design spec currently. -->
         <item name="snackbarStyle">@style/snackbar_style_day_night_fix</item>
@@ -55,7 +14,6 @@
         <item name="shapeAppearance">@style/ShapeAppearance.MaterialComponents.SmallComponent</item>
     </style>
 
-
     <style name="Widget.MaterialComponents.TextInputLayout.OutlinedBox.ConfirmSend" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
         <item name="colorControlActivated">@color/colorAccentOrange</item>
     </style>
@@ -63,7 +21,6 @@
     <style name="AccentConfirmSend">
         <item name="colorControlActivated">@color/colorAccentOrange</item>
     </style>
-
 
     <style name="SliderTooltipTextStyle" parent="TextAppearance.MaterialComponents.Tooltip">
         <item name="android:textColor">#ddd</item>

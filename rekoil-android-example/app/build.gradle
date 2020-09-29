@@ -7,7 +7,7 @@ android {
     compileSdkVersion compile_sdk_version
 
     defaultConfig {
-        applicationId "tech.muso.demo.architecture"
+        applicationId "tech.muso.demo.rekoil"
         minSdkVersion min_sdk_version
         targetSdkVersion compile_sdk_version
         versionCode 1

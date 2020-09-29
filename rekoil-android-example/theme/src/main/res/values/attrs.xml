@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:ns1="urn:oasis:names:tc:xliff:document:1.2" xmlns:ns2="http://schemas.android.com/tools">
-    <declare-styleable name="FinanceTheme">
+<resources>
+    <declare-styleable name="DemoTheme">
         <attr name="flavorIconText" format="reference|string"/>
         <attr name="colorIconSecondary" format="reference|color"/>
         <attr name="colorTitleTextPrimary" format="reference|color"/>
         <attr name="colorTitleTextSecondary" format="reference|color"/>
         <attr name="colorSuccess" format="reference|color"/>
-        <attr name="colorLongPrimary" format="reference|color"/>
-        <attr name="colorShortPrimary" format="reference|color"/>
         <attr name="titleTextStylePrimary" format="reference"/>
         <attr name="titleTextStyleSecondary" format="reference"/>
     </declare-styleable>

@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App theme, that extends our :theme module's theme -->
-    <style name="AppTheme" parent="TastyTheme" >
+    <style name="AppTheme" parent="RekoilDemoTheme" >
         <!-- Here we would add our customization -->
         <item name="colorControlActivated">@color/colorAccentOrange</item>
     </style>
 
     <!-- Dark theme with red accents -->
-    <style name="TastyTheme" parent="FinanceTheme">
-        <item name="flavorIconText">🍒</item>
+    <style name="RekoilDemoTheme" parent="DemoTheme">
+        <item name="flavorIconText">🧮\uD83E\uDDEE</item>
         <item name="colorTitleTextSecondary">#FF9E9E9E</item>
         <item name="colorPrimary">#e22222</item>
         <item name="colorSurface">#0d0d0d</item>

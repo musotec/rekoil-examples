@@ -160,34 +160,25 @@
                             android:textStyle="bold" />
 
                         <com.google.android.material.radiobutton.MaterialRadioButton
-                            android:id="@+id/radioButton2"
+                            android:id="@+id/radioButtonFit"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="16dp"
-                            android:text="Radio Button"
-                            app:layout_constraintBottom_toTopOf="@+id/radioButton3"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@+id/radioButton1" />
+                            tools:text="Fit" />
 
                         <com.google.android.material.radiobutton.MaterialRadioButton
-                            android:id="@+id/radioButton1"
+                            android:id="@+id/radioButtonGlobal"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="16dp"
-                            android:text="Radio Button"
-                            app:layout_constraintBottom_toTopOf="@+id/radioButton2"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toTopOf="parent" />
+                            tools:text="Global" />
 
                         <com.google.android.material.radiobutton.MaterialRadioButton
-                            android:id="@+id/radioButton3"
+                            android:id="@+id/radioButtonAlign"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="16dp"
-                            android:text="Radio Button"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@+id/radioButton2" />
+                            tools:text="Align" />
 
                     </RadioGroup>
                 </androidx.cardview.widget.CardView>

@@ -18,7 +18,6 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.radiobutton.MaterialRadioButton
-import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
 import kotlinx.coroutines.*
@@ -94,14 +93,14 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
 
             val fab = rootView.findViewById<FloatingActionButton>(R.id.floatingActionButton)
             fab.setOnClickListener {
-//                Alert
+                // TODO: color selection dialog from a mini library
             }
 
             val radioGroup = rootView.findViewById<RadioGroup>(R.id.scale_type_radio_group)
 
-            val radioFit = rootView.findViewById<MaterialRadioButton>(R.id.radioButton1)
-            val radioGlobal = rootView.findViewById<MaterialRadioButton>(R.id.radioButton2)
-            val radioAlign = rootView.findViewById<MaterialRadioButton>(R.id.radioButton3)
+            val radioFit = rootView.findViewById<MaterialRadioButton>(R.id.radioButtonFit)
+            val radioGlobal = rootView.findViewById<MaterialRadioButton>(R.id.radioButtonGlobal)
+            val radioAlign = rootView.findViewById<MaterialRadioButton>(R.id.radioButtonAlign)
 
             val buttonRandomize = rootView.findViewById<Button>(R.id.randomize_button)
 
@@ -121,6 +120,7 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
             var selectionStartPointSubscriber: Job? = null
             var selectionEndPointSubscriber: Job? = null
             var colorSubscriber: Job? = null
+            var scaleSubscriber: Job? = null
             var clipSubscriber: Job? = null
             var fillSubscriber: Job? = null
             var connectPointsSubscriber: Job? = null
@@ -134,6 +134,7 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
                 chipConnectPoints.setOnCheckedChangeListener(null)
                 chipClip.setOnCheckedChangeListener(null)
                 chipFill.setOnCheckedChangeListener(null)
+                scaleSubscriber?.cancel()
                 selectionStartPointSubscriber?.cancel()
                 selectionEndPointSubscriber?.cancel()
                 colorSubscriber?.cancel()
@@ -205,6 +206,14 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
 
                 varianceSubscriber = selectedLine.variance.subscribe {
                     textVarianceValue.text = it?.let { "%.1f".format(it) } ?: ""
+                }
+
+                scaleSubscriber = selectedLine.scaleType.subscribe {
+                    when (it) {
+                        Line.ScaleMode.FIT -> if (!radioFit.isChecked) radioFit.isChecked = true
+                        Line.ScaleMode.GLOBAL -> if (!radioGlobal.isChecked) radioGlobal.isChecked = true
+                        Line.ScaleMode.ALIGN_START -> if (!radioAlign.isChecked) radioAlign.isChecked = true
+                    }
                 }
 
                 fillSubscriber = selectedLine.fill.subscribe { if (chipFill.isChecked != it) chipFill.isChecked = it }
@@ -289,15 +298,15 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
                         // attach new listener to receive updates.
                         radioGroup.setOnCheckedChangeListener { group, checkedId ->
                             when (checkedId) {
-                                R.id.radioButton1 -> {
+                                R.id.radioButtonFit -> {
                                     if (radioFit.isChecked)
                                         value = Line.ScaleMode.FIT
                                 }
-                                R.id.radioButton2 -> {
+                                R.id.radioButtonGlobal -> {
                                     if (radioGlobal.isChecked)
                                         value = Line.ScaleMode.GLOBAL
                                 }
-                                R.id.radioButton3 -> {
+                                R.id.radioButtonAlign -> {
                                     if (radioAlign.isChecked)
                                         value = Line.ScaleMode.ALIGN_START
                                 }
@@ -467,7 +476,7 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
 
                 CoroutineScope(Dispatchers.IO).launch {
                     delay(2500)
-                    // do something.
+                    // select range over time automatically
                     val (start, end) = Pair(0.15f, 0.85f)
                     var pct = start
                     while (pct < end) {
@@ -475,8 +484,6 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
                         pct += 0.01f
                         delay(50)
                     }
-                   delay(6000)
-//                    resetAllLines()
                 }
 
                 rootView.findViewById<MaterialButton>(R.id.reset_button).setOnClickListener {
