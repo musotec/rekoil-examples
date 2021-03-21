@@ -1,12 +1,13 @@
 package tech.muso.demo.graph.spark
 
-import android.graphics.PointF
+
 import android.util.Log
 import tech.muso.demo.graph.spark.graph.Axis
 import tech.muso.demo.graph.spark.graph.Line
 import tech.muso.demo.graph.spark.types.*
+import tech.muso.demo.graph.core.Graphable
+import tech.muso.demo.graph.core.PointGraphable
 import tech.muso.rekoil.core.*
-import kotlin.math.abs
 
 /**
  * Contains Attributes for drawing the line on the graph relative to other lines.
@@ -14,7 +15,7 @@ import kotlin.math.abs
 class LineRekoilAdapter(
     rekoilScope: RekoilScope,
     val globals: LineGraphView.GlobalAtoms
-) : RekoilScope by rekoilScope, Iterable<PointF> {
+) : RekoilScope by rekoilScope, Iterable<PointGraphable> {
 
     /**
      * The line that this adapter is linked to.
@@ -51,8 +52,8 @@ class LineRekoilAdapter(
         globals.redrawGraph.value = true
     }
 
-    val data: Atom<List<PointF>> = atom<List<PointF>> {
-        listOf<PointF>()
+    val data: Atom<List<Graphable>> = atom<List<Graphable>> {
+        listOf<Graphable>()
     }
 
     private val selectionRange = selector {
@@ -145,23 +146,23 @@ class LineRekoilAdapter(
         }
     }
 
-    val start: Selector<PointF?> = selector {
+    val start: Selector<Graphable?> = selector {
         get(data).first().also {
             // and update the axis while we are here
             axisArray.first().position = it.y
         }
     }
 
-    val end: Selector<PointF?> = selector {
+    val end: Selector<Graphable?> = selector {
         get(data).last()
     }
 
     val max: Selector<Float?> = selector {
-        get(data).maxByOrNull { point -> point.y }?.y ?: 0f
+        get(data).maxByOrNull { point -> point.top }?.top ?: 0f
     }
 
     val min: Selector<Float?> = selector {
-        get(data).minByOrNull { point -> point.y }?.y ?: 0f
+        get(data).minByOrNull { point -> point.top }?.top ?: 0f
     }
 
     val axisArray: MutableList<Axis> = mutableListOf<Axis>().apply {
@@ -224,14 +225,14 @@ class LineRekoilAdapter(
     }
 
     val iterator = selector {
-        get(data).mapIndexed { i, point -> PointF(i.toFloat(), data.value[i].y) }.iterator()
+        get(data).mapIndexed { i, point -> PointGraphable(i.toFloat(), data.value[i].y) }.iterator()
     }
 
-    override fun iterator(): Iterator<PointF> {
+    override fun iterator(): Iterator<PointGraphable> {
 //        if (bounds.isUnset) return listOf<PointF>().iterator()
         // use int progression over the bounds to control step by; then map to our data.
 //        return (bounds.start until bounds.end step resolution).map { i -> PointF(i.toFloat(), data.value[i].y) }.iterator()
-        return iterator.value ?: listOf<PointF>().iterator()
+        return iterator.value ?: listOf<PointGraphable>().iterator()
     }
 
     fun unlink() {

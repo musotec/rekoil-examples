@@ -6,7 +6,6 @@ import android.view.View
 import androidx.annotation.ColorInt
 import androidx.core.graphics.withSave
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import tech.muso.demo.graph.spark.types.annotation.FillType
 import tech.muso.demo.graph.spark.types.annotation.ClipType
 import tech.muso.demo.graph.spark.LineGraphView
@@ -14,6 +13,8 @@ import tech.muso.demo.graph.spark.LineRekoilAdapter
 import tech.muso.demo.graph.spark.animation.MorphAnimator
 import tech.muso.demo.graph.spark.paint.shaders.HueGradientShader
 import tech.muso.demo.graph.spark.types.*
+import tech.muso.demo.graph.core.Graphable
+import tech.muso.demo.graph.core.PointGraphable
 import tech.muso.rekoil.core.Atom
 import tech.muso.rekoil.core.RekoilScope
 import tech.muso.rekoil.core.launch
@@ -49,8 +50,8 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
     // minimum and maximum values on the graph
     public val max: Float get() = adapter.max.value ?: 0f
     public val min: Float get() = adapter.min.value ?: 0f
-    public val start: PointF get() = adapter.start.value ?: PointF()
-    public val end: PointF get() = adapter.end.value ?: PointF()
+    public val start: Graphable get() = adapter.start.value ?: PointGraphable(0f,0f)
+    public val end: Graphable get() = adapter.end.value ?: PointGraphable(0f,0f)
     public val range: Float get() = max - min
 
     init {
@@ -125,25 +126,25 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
 
     private val fillTypeAtom: Atom<Int> = rekoilScope.atom { FillType.TOWARD_ZERO }
     var fillType: Int by fillTypeAtom
-        init {
-            rekoilScope.selector {
-                // TODO: rethink if this is necessary when fill types are changeable
-                if (get(fillTypeAtom) != FillType.NONE) {
+    init {
+        rekoilScope.selector {
+            // TODO: rethink if this is necessary when fill types are changeable
+            if (get(fillTypeAtom) != FillType.NONE) {
 //                    populateRenderingPath()
-                }
             }
         }
+    }
 
     private val fillColorAtom: Atom<Int> = rekoilScope.atom { builder.lineColor }
     var fillColor: Int by fillColorAtom
-        init {
-            rekoilScope.selector {
-                val fillType = get(fillTypeAtom)
-                if (fillType != FillType.NONE) {
-                    generateFillPaint()
-                }
+    init {
+        rekoilScope.selector {
+            val fillType = get(fillTypeAtom)
+            if (fillType != FillType.NONE) {
+                generateFillPaint()
             }
         }
+    }
 
     class Builder {
         @ColorInt internal var lineColor: Int = 0
@@ -269,7 +270,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
             if (cornerRadius != 0f) {
                 pathEffect = CornerPathEffect(cornerRadius)
             }
-    }
+        }
 
     private val fillPaint = Paint().apply {
         set(linePaint)
@@ -472,28 +473,28 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
 
     // TODO: REFACTOR
     var verticalRatio = 1f
-    set(value) {
-        // don't do an animation (or anything) if we already are at this value
-        if (field != value) {
+        set(value) {
+            // don't do an animation (or anything) if we already are at this value
+            if (field != value) {
 
-            val amount = abs(field - value)
+                val amount = abs(field - value)
 
-            // using precision allows for us to avoid "wiggles" in graph due to very slight changes.
-            val precision = 0.02f // only adjust for values within precision; TODO: allow specification of this??
-            if (amount < precision) {
-                return
-            }
+                // using precision allows for us to avoid "wiggles" in graph due to very slight changes.
+                val precision = 0.02f // only adjust for values within precision; TODO: allow specification of this??
+                if (amount < precision) {
+                    return
+                }
 
-            Log.e("Line", "#$identifier verticalRatio.set($field -> $value) delta=${field-value}")
+                Log.e("Line", "#$identifier verticalRatio.set($field -> $value) delta=${field-value}")
 
 //            alignScaleInfo *= (value/field)
-            field = value
-        }
+                field = value
+            }
 
 //        animateTransition(1f) {
 //            populateRenderingPath() // vertical ratio changed
 //        }
-    }
+        }
 
     val topMargin = 0.05f
     val bottomMargin = 0.05f
@@ -598,7 +599,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
                     HueGradientShader.generate(maxValue, viewDimensions.height),
                     this,
                     PorterDuff.Mode.DST_OUT
-                    )
+                )
             } ?: HueGradientShader.generate(maxValue, viewDimensions.height)
     }
 

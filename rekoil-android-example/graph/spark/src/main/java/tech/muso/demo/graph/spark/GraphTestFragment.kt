@@ -21,6 +21,7 @@ import com.google.android.material.radiobutton.MaterialRadioButton
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
 import kotlinx.coroutines.*
+import tech.muso.demo.graph.core.PointGraphable
 import tech.muso.demo.graph.spark.graph.Line
 import tech.muso.demo.graph.spark.helpers.compose
 import tech.muso.demo.graph.spark.helpers.generate
@@ -61,7 +62,7 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
                 base += random.nextGaussian().toFloat() * ((i % 4) + 1)
                 base
             }
-            line.data.value = data.mapIndexed { index, y -> PointF(index.toFloat(), y) }
+            line.data.value = data.mapIndexed { index, y -> PointGraphable(index.toFloat(), y) }
             line.scaleType.value = Line.ScaleMode.ALIGN_START
         }
     }
@@ -74,7 +75,7 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
             base += random.nextGaussian().toFloat() * factor
             base
         }
-        line.data.value = data.mapIndexed { index, y -> PointF(index.toFloat(), y) }
+        line.data.value = data.mapIndexed { index, y -> PointGraphable(index.toFloat(), y) }
     }
 
     // Create a rekoil scope that lives only on the Fragment Lifecycle to avoid extraneous work.
@@ -393,7 +394,7 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
                                     3 -> {
                                         delay(5000)
                                         adapter.data.value = (0..500).mapIndexed { index, value ->
-                                            PointF(
+                                            PointGraphable(
                                                 index.toFloat(),
                                                 9040.toFloat() + value
                                             )
@@ -406,7 +407,7 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
                                         adapter.data.value = (0..360 step 2).generate(
                                             compose(::sin, ::toRadians)
                                         ).mapIndexed { i, y ->
-                                            PointF(
+                                            PointGraphable(
                                                 i.toFloat(),
                                                 500f * y
                                             )
@@ -437,7 +438,7 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
                                         adapter.data.value = (0..360 step 5).generate(
                                             compose(::cos, ::toRadians)
                                         ).mapIndexed { i, y ->
-                                            PointF(
+                                            PointGraphable(
                                                 i.toFloat(),
                                                 250f * y
                                             )
