@@ -1,0 +1,4 @@
+allprojects {
+    // you can customize your build directory here if you like
+    // buildDir = "/custom/build/path/${rootProject.name}/${project.name}"
+}

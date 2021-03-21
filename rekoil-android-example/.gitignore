@@ -79,3 +79,4 @@ lint/tmp/
 
 app/libs/rekoil-0.0.1-SNAPSHOT.jar
 graph/spark/libs/
+build-directory.gradle

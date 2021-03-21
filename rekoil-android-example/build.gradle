@@ -118,6 +118,8 @@ allprojects {
     }
 }
 
+apply from: "build-directory.gradle"
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
