@@ -1,4 +1,11 @@
 allprojects {
-    // you can customize your build directory here if you like
-    // buildDir = "/custom/build/path/${rootProject.name}/${project.name}"
+    // to customize your build directory, set the customBuildDirectory property in local.properties
+    // customBuildDirectory=/custom/build/dir
+
+    def localProperties = new Properties()
+    localProperties.load(new FileInputStream(rootProject.file("local.properties")))
+    def customBuildDir = localProperties['customBuildDir']
+    if (customBuildDir != null) {
+        buildDir = "$customBuildDir/${rootProject.name}/${project.name}"
+    }
 }
