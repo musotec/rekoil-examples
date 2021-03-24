@@ -6,6 +6,7 @@ import android.view.View
 import androidx.annotation.ColorInt
 import androidx.core.graphics.withSave
 import kotlinx.coroutines.CoroutineScope
+import tech.muso.demo.graph.core.CandleGraphable
 import tech.muso.demo.graph.spark.types.annotation.FillType
 import tech.muso.demo.graph.spark.types.annotation.ClipType
 import tech.muso.demo.graph.spark.LineGraphView
@@ -217,6 +218,8 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
     private var renderPointsFloatArray: FloatArray
             = FloatArray(0)
 
+    private var renderCandlesArray: Array<CandleGraphable?> = emptyArray()
+
     init {
         rekoilScope.launch {
             // selector logic for handling line paint attributes
@@ -251,6 +254,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
                 if (width * 4 > renderLinesFloatArray.size) {
                     renderLinesFloatArray = FloatArray(width * 4)
                     renderPointsFloatArray = FloatArray(width * 2)  // also update points
+                    renderCandlesArray = arrayOfNulls(width)
                 }
             }
         }
@@ -280,7 +284,17 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
         strokeWidth = 0f
     }
 
-    private val rawDataPoints = arrayListOf<PointF>()
+    private val candlePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+        // TODO: extension rekoil.fun Any.selector(scope) { apply }
+        .apply {
+            style = Paint.Style.FILL_AND_STROKE
+            color = lineColor
+            strokeWidth = 2f
+            strokeCap = Paint.Cap.SQUARE
+        }
+
+
+    private val rawGraphableList = arrayListOf<Graphable>()
     private var renderedPoints = mutableListOf<PointF>()
 
     // TODO: support other types of animation
@@ -288,7 +302,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
     private var animateFrame = true
 
     private fun animateTransition(speed: Float = 1f, onAnimationFinished: () -> Unit) {
-        if (rawDataPoints.size == 0 || renderedPoints.size == 0) {
+        if (rawGraphableList.size == 0 || renderedPoints.size == 0) {
             Log.e("AnimateTransition", "#$identifier ANIMATION FINISHED EARLY")
             onAnimationFinished()
             return
@@ -304,10 +318,10 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
 
         Log.w("AnimateTransition", "#$identifier creating path animation: Assumptions [ globalAlignScale=$globalAlignGuideline; max=$max, min=$min, start=$start, end=$end; verticalRatio=$verticalRatio; ]")
         Log.w("AnimateTransition", "#$identifier creating path animation: RenderStart [ start=${renderedPoints.first()}, end=${renderedPoints.last()} ]")
-        Log.w("AnimateTransition", "#$identifier creating path animation: RawTransformDestination [ start=${rawDataPoints.first()}, end=${rawDataPoints.last()} ]")
+        Log.w("AnimateTransition", "#$identifier creating path animation: RawTransformDestination [ start=${rawGraphableList.first()}, end=${rawGraphableList.last()} ]")
 
         // in a new array, compute the final path
-        val computedFinalPath = computeRenderingPath(rawDataPoints)
+        val computedFinalPath = computeRenderingPath(rawGraphableList)
         if (computedFinalPath.isNotEmpty()) Log.w("AnimateTransition", "#$identifier creating path animation: RenderEnd [ start=${computedFinalPath.first()}, end=${computedFinalPath.last()} ]")
 
         // abort animation if start = end (nothing to do)
@@ -337,15 +351,15 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
             /*
              * Generate the list of raw data points for reference during animation.
              */
-            rawDataPoints.clear()
+            rawGraphableList.clear()
 
             // add all the points from the adapter
-            adapter.forEachIndexed { index, point ->
-                rawDataPoints.add(point)
+            adapter.forEachIndexed { index, graphable ->
+                rawGraphableList.add(graphable)
             }
 
-            if (rawDataPoints.isNotEmpty()) {
-                Log.d("LINE", "#$identifier Populate Data Points: start=${rawDataPoints.first()}, end=${rawDataPoints.last()}")
+            if (rawGraphableList.isNotEmpty()) {
+                Log.d("LINE", "#$identifier Populate Data Points: start=${rawGraphableList.first()}, end=${rawGraphableList.last()}")
             }
         }
     }
@@ -360,22 +374,24 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
         renderPath.reset()
         fillPath.reset()
         Log.e("Line", "#$identifier populateRenderingPath()")
-        computeRenderingPath(rawDataPoints, renderedPoints)
+        computeRenderingPath(rawGraphableList, renderedPoints)
         convertPointsToRenderArray(renderedPoints)
         convertPointsToRenderPath(renderedPoints)   // populate path when finished for fill
         adapter.validate()
         adapter.redraw()
     }
 
-    private var sublineCount = 0    // should always equal rawDataPoints-1
+    private var renderCount = 0    // should always equal rawDataPoints-1
 
     private fun convertPointsToRenderArray(renderPoints: MutableList<PointF>) {
         if (renderPoints.isEmpty() || renderLinesFloatArray.isEmpty()) return
 
-        val lineCount = rawDataPoints.size - 1
+        val lineCount = rawGraphableList.size// - 1
         var index = 0
         var j = 0
-        sublineCount = 0    // TODO: remove extraneous variable
+        renderCount = 0    // used to compute number of items to render
+
+        renderPoints.toTypedArray()
         try {
             for (i in 0 until lineCount) {
                 val startPoint = renderPoints[i]
@@ -392,7 +408,9 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
 
                 renderLinesFloatArray[index++] = x1
                 renderLinesFloatArray[index++] = y1
-                sublineCount++
+                renderCount++
+
+                renderCandlesArray[i] = CandleGraphable(x0, y0-50, y0+50, y0+100, y0-100, 100)
             }
         } catch (ex: IndexOutOfBoundsException) {
             return  // can occur when converting and array size changes asynchronously
@@ -502,7 +520,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
     /**
      * Populate the rendering path based on the state of the animation.
      */
-    private fun computeRenderingPath(dataPoints: List<PointF>, renderPoints: MutableList<PointF> = arrayListOf()): List<PointF> {
+    private fun computeRenderingPath(dataPoints: List<Graphable>, renderPoints: MutableList<PointF> = arrayListOf()): List<PointF> {
         val adjustedViewHeight = viewDimensions.height * (1f - topMargin - bottomMargin)
 
         val xrange: Float = adapter.count.value?.toFloat() ?: 1f
@@ -668,11 +686,32 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
         //  and then pre-compute on the animation cycles only the keyframes that we will need for the next draw.
         animateFrame = true
 
-        if (drawLines) {
-            canvas.drawLines(renderLinesFloatArray, 0, sublineCount shl 2, linePaint)
-        } else {
-            canvas.drawPoints(renderPointsFloatArray, 0, sublineCount shl 1, linePaint)
+        when {
+            rawGraphableList.firstOrNull() is CandleGraphable -> {
+                canvas.drawCandles(renderCandlesArray, renderCount, candlePaint)
+            }
+            drawLines -> {
+                canvas.drawLines(renderLinesFloatArray, 0, renderCount shl 2, linePaint)
+            }
+            else -> {
+                canvas.drawPoints(renderPointsFloatArray, 0, renderCount shl 1, linePaint)
+            }
         }
 //        if (identifier == 0) Log.i("RENDERARRAY", "drew $sublineCount lines")
+    }
+}
+
+private fun Canvas.drawCandles(renderCandlesArray: Array<CandleGraphable?>, count: Int, linePaint: Paint) {
+    if (renderCandlesArray.isEmpty()) return
+
+    val s = 4
+    renderCandlesArray.forEachIndexed { index, candleGraphable ->
+        // exit out of this loop if we reach the count
+        if (index > count) return@forEachIndexed
+
+        candleGraphable?.let { candle ->
+            drawLine(candle.x, candle.low, candle.x, candle.high,linePaint)
+            drawRect(candle.x-s, candle.open, candle.x+s, candle.close, linePaint)
+        }
     }
 }

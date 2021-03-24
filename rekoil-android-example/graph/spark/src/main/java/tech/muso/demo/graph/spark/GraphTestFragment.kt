@@ -21,6 +21,7 @@ import com.google.android.material.radiobutton.MaterialRadioButton
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
 import kotlinx.coroutines.*
+import tech.muso.demo.graph.core.CandleGraphable
 import tech.muso.demo.graph.core.PointGraphable
 import tech.muso.demo.graph.spark.graph.Line
 import tech.muso.demo.graph.spark.helpers.compose
@@ -411,6 +412,15 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
                                                 i.toFloat(),
                                                 500f * y
                                             )
+//                                            val start = 500f*y
+//                                            CandleGraphable(
+//                                                x = i.toFloat(),
+//                                                open = start,
+//                                                close = start + 50,
+//                                                low = start-50,
+//                                                high = start + 100,
+//                                                volume = 100
+//                                            )
                                         }
 
                                         adapter.fill.value = true
@@ -438,9 +448,19 @@ class GraphTestFragment : Fragment(), LifecycleOwner {
                                         adapter.data.value = (0..360 step 5).generate(
                                             compose(::cos, ::toRadians)
                                         ).mapIndexed { i, y ->
-                                            PointGraphable(
-                                                i.toFloat(),
-                                                250f * y
+//                                            PointGraphable(
+//                                                i.toFloat(),
+//                                                250f * y
+//                                            )
+
+                                            val start = 250f * y
+                                            CandleGraphable(
+                                                x = i.toFloat(),
+                                                open = start,
+                                                close = start + 50,
+                                                low = start-50,
+                                                high = start + 100,
+                                                volume = 100
                                             )
                                         }
 

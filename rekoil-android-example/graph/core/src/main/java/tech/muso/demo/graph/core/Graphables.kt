@@ -29,5 +29,6 @@ data class CandleGraphable(
 ) : Graphable {
     override val top: Float = high
     override val bottom: Float = low
-    override val center: PointF by lazy { PointF(x, (high - low) ) } // todo: maybe we also want to avoid extremes? then we can use abs(open-close)
+    val height: Float = high - low
+    override val center: PointF by lazy { PointF(x, height/2 + low) } // todo: maybe we also want to avoid extremes? then we can use abs(open-close)
 }

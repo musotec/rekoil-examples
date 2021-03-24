@@ -15,7 +15,7 @@ import tech.muso.rekoil.core.*
 class LineRekoilAdapter(
     rekoilScope: RekoilScope,
     val globals: LineGraphView.GlobalAtoms
-) : RekoilScope by rekoilScope, Iterable<PointGraphable> {
+) : RekoilScope by rekoilScope, Iterable<Graphable> {
 
     /**
      * The line that this adapter is linked to.
@@ -123,7 +123,7 @@ class LineRekoilAdapter(
         // FIXME: assumes points equally spaced; x/time axis not actually implemented.
         val data = get(data)
         val (closestStartPointIndex, closestEndPointIndex) = get(selectionRange) ?: return@selector null
-        (data[closestEndPointIndex].x - data[closestStartPointIndex].x).toDouble()
+        (data[closestEndPointIndex.coerceAtMost(data.size-1)].x - data[closestStartPointIndex].x).toDouble()
     }
 
     val mean: Selector<Double?> = selector {
@@ -162,7 +162,7 @@ class LineRekoilAdapter(
     }
 
     val min: Selector<Float?> = selector {
-        get(data).minByOrNull { point -> point.top }?.top ?: 0f
+        get(data).minByOrNull { point -> point.bottom }?.bottom ?: 0f
     }
 
     val axisArray: MutableList<Axis> = mutableListOf<Axis>().apply {
@@ -224,15 +224,17 @@ class LineRekoilAdapter(
         get(data).size
     }
 
+    // TODO: Fix this for Candle? maybe iterator converts to points always
     val iterator = selector {
-        get(data).mapIndexed { i, point -> PointGraphable(i.toFloat(), data.value[i].y) }.iterator()
+        get(data).iterator()
+//        get(data).mapIndexed { i, point -> PointGraphable(i.toFloat(), data.value[i].y) }.iterator()
     }
 
-    override fun iterator(): Iterator<PointGraphable> {
+    override fun iterator(): Iterator<Graphable> {
 //        if (bounds.isUnset) return listOf<PointF>().iterator()
         // use int progression over the bounds to control step by; then map to our data.
 //        return (bounds.start until bounds.end step resolution).map { i -> PointF(i.toFloat(), data.value[i].y) }.iterator()
-        return iterator.value ?: listOf<PointGraphable>().iterator()
+        return iterator.value ?: listOf<Graphable>().iterator()
     }
 
     fun unlink() {

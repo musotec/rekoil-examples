@@ -4,6 +4,8 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.PointF
+import tech.muso.demo.graph.core.Graphable
+import tech.muso.demo.graph.core.PointGraphable
 import tech.muso.demo.graph.spark.types.ViewDimensions
 import kotlin.reflect.KFunction2
 
@@ -22,8 +24,8 @@ data class Axis(var position: Float,
         strokeWidth = 1f
     }
 
-    val startPoint: PointF = if (isHorizontal) PointF(0f, position) else PointF(position, 0f)
-    val endPoint: PointF = if (isHorizontal) PointF(-1f, position) else PointF(position, -1f)
+    val startPoint: PointGraphable = if (isHorizontal) PointGraphable(0f, position) else PointGraphable(position, 0f)
+    val endPoint: PointGraphable = if (isHorizontal) PointGraphable(-1f, position) else PointGraphable(position, -1f)
 
     private val points = listOf(startPoint, endPoint)
     val renderPoints = arrayListOf<PointF>()
@@ -33,7 +35,8 @@ data class Axis(var position: Float,
      *
      * TODO: FIX THIS TO BE GOOD INSTEAD OF WHAT IT IS
      */
-    fun draw(canvas: Canvas, viewDimensions: ViewDimensions, computeFunction: KFunction2<List<PointF>, MutableList<PointF>, List<PointF>>) {
+    fun draw(canvas: Canvas, viewDimensions: ViewDimensions,
+             computeFunction: KFunction2<List<Graphable>, MutableList<PointF>, List<PointF>>) {
 //        if (isHorizontal)
 //            canvas.drawLine(0f, position, viewDimensions.width, position, paint)
 //        else
