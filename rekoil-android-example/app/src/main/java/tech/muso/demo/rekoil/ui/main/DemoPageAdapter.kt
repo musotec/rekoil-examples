@@ -11,6 +11,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.tabs.TabLayout
 import tech.muso.demo.rekoil.R
 import tech.muso.demo.graph.spark.GraphTestFragment
+import tech.muso.demo.rekoil.GraphStockFragment
 import tech.muso.demo.theme.ThemeTestFragment
 
 class DemoPageAdapter(private val activity: FragmentActivity, fm: FragmentManager)
@@ -59,8 +60,13 @@ class DemoPageAdapter(private val activity: FragmentActivity, fm: FragmentManage
             return ArrayList<FragmentPage>().apply {
                 add(
                     FragmentPage(
-                        GraphTestFragment(),
+                        GraphStockFragment(),
                         R.drawable.ic_baseline_trending_up_24)
+                )
+                add(
+                    FragmentPage(
+                        GraphTestFragment(),
+                        R.drawable.ic_mtrl_chip_checked_diamond)
                 )
                 add(
                     FragmentPage(

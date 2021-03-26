@@ -42,7 +42,14 @@ dependencies {
     implementation project(":theme")
     implementation project(":graph:spark")
 
+    implementation moshi
+    kapt moshi_codegen
+
     implementation libraries
+
+    implementation "io.ktor:ktor-client-cio:$ktor_version"
+    implementation "io.ktor:ktor-client-websockets:$ktor_version"
+    implementation "io.ktor:ktor-client-logging-jvm:$ktor_version"
 
     testImplementation testLibraries
     androidTestImplementation androidTestLibraries

@@ -10,6 +10,7 @@ buildscript {
         java_version = JavaVersion.VERSION_1_8
         gradle_tools_version = '4.0.1'
         kotlin_version = '1.4.0'
+        ktor_version = '1.5.2'
 
         // local variables (use def)
         def androidx_test_version = '1.2.0'
@@ -89,6 +90,14 @@ buildscript {
                 // Architecture Components testing libraries
                 "androidx.work:work-testing:$work_version",
 
+        ]
+
+        def moshi_version = '1.11.0'
+        moshi_codegen = "com.squareup.moshi:moshi-kotlin-codegen:$moshi_version"
+        moshi = [
+                "com.squareup.moshi:moshi-adapters:$moshi_version",
+                "com.squareup.moshi:moshi-kotlin:$moshi_version", // remove if reflective cast for polymorphism is unneeded
+                "com.squareup.retrofit2:converter-gson:2.4.0"
         ]
     }
 

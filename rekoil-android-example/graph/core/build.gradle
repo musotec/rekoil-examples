@@ -38,8 +38,6 @@ android {
 }
 
 dependencies {
-    api "tech.muso.rekoil:rekoil-jvm:0.0.2"
-
     implementation libraries
 
     testImplementation testLibraries

@@ -1,7 +1,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
-apply plugin: 'kotlin-kapt'
+//apply plugin: 'kotlin-kapt'
 
 android {
     compileSdkVersion compile_sdk_version
@@ -38,8 +38,10 @@ android {
 }
 
 dependencies {
-    implementation project(":graph:core")
-    api "tech.muso.rekoil:rekoil-jvm:0.0.2"
+//    compile fileTree(dir: 'libs', include: ['*.jar'])
+    api project(":graph:core")
+    compile files('libs/rekoil-0.0.1-20210324.211156-72.jar')
+//    api "tech.muso.rekoil:rekoil-jvm:0.0.2"
 
     implementation libraries
 

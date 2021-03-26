@@ -169,8 +169,12 @@ class LineGraphView(context: Context, attrs: AttributeSet) : View(context, attrs
             return selector {
                 // get the scale type, which specifies what computation to perform.
                 val scaleType = get(adapter.scaleType)
-                // also get the data to register on data change
-                val data = get(adapter.data)
+//                // also get the data to register on data change
+//                val data = get(adapter.data)
+
+                // update any time the line changes it's min/max
+                get(adapter.min)
+                get(adapter.max)
 
                 // when type changes, remove any of our nodes from prior mode
                 if (scaleType != Line.ScaleMode.GLOBAL) {
@@ -222,6 +226,8 @@ class LineGraphView(context: Context, attrs: AttributeSet) : View(context, attrs
                     Line.ScaleMode.ALIGN_START, Line.ScaleMode.ALIGN_END -> {
                         val id = adapter.id
                         val (aboveValue, belowValue) = get(adapter.alignmentInfo)
+
+//                        println("SCALE: [$aboveValue,$belowValue]")
 
                         // encapsulate in a id/pair adapter
                         val above = NodeIdSizePair(id, aboveValue)

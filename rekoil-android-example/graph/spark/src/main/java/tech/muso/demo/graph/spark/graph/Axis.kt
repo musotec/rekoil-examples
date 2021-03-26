@@ -4,6 +4,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.PointF
+import tech.muso.demo.graph.core.CandleGraphable
 import tech.muso.demo.graph.core.Graphable
 import tech.muso.demo.graph.core.PointGraphable
 import tech.muso.demo.graph.spark.types.ViewDimensions
@@ -36,19 +37,20 @@ data class Axis(var position: Float,
      * TODO: FIX THIS TO BE GOOD INSTEAD OF WHAT IT IS
      */
     fun draw(canvas: Canvas, viewDimensions: ViewDimensions,
-             computeFunction: KFunction2<List<Graphable>, MutableList<PointF>, List<PointF>>) {
+             computeFunction: KFunction2<List<Graphable>, MutableList<Graphable>, List<Graphable>>) {
 //        if (isHorizontal)
 //            canvas.drawLine(0f, position, viewDimensions.width, position, paint)
 //        else
 //            canvas.drawLine(position, 0f, position, viewDimensions.height, paint)
 
-        if (points[1].x != 0f) points[1].x = viewDimensions.width
-        if (points[1].y != 0f) points[1].y = viewDimensions.height
-
-        computeFunction(points, renderPoints)
-
-        if (isHorizontal) renderPoints[1].x = viewDimensions.width
-
-        canvas.drawLine(renderPoints[0].x, renderPoints[0].y, renderPoints[1].x, renderPoints[1].y, paint)
+        // TODO: THIS CODE BELOW IS GOOD PROBABLY
+//        if (points[1].x != 0f) points[1].x = viewDimensions.width
+//        if (points[1].y != 0f) points[1].y = viewDimensions.height
+//
+//        computeFunction(points, renderPoints)
+//
+//        if (isHorizontal) renderPoints[1].x = viewDimensions.width
+//
+//        canvas.drawLine(renderPoints[0].x, renderPoints[0].y, renderPoints[1].x, renderPoints[1].y, paint)
     }
 }

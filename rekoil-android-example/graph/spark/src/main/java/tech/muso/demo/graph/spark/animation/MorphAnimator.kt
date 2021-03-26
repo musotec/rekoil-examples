@@ -106,7 +106,8 @@ class MorphAnimator(val renderPoints: MutableList<PointF>): Animator() {
         val totalPointsAnimation = max(startSize, endSize)
 
         endingPointsAdjusted = if (startSize <= totalPointsAnimation) {
-            endingPoints.also { Log.e("POINT", "endingPoints.size = ${it.size}") }
+            endingPoints
+//                .also { Log.e("POINT", "endingPoints.size = ${it.size}") }
         } else {
             // amount of points to interpolate
             val stepSize: Int =
