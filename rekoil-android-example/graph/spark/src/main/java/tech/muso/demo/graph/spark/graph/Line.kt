@@ -251,8 +251,8 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
                     }
                 }
 
-                Log.i("LINE", "#$identifier - set line color: " +
-                        "${Integer.toHexString(color)}, width: $width")
+//                Log.i("LINE", "#$identifier - set line color: " +
+//                        "${Integer.toHexString(color)}, width: $width")
 
                 adapter.redraw()
             }
@@ -483,7 +483,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
                 if (fillType != FillType.NONE && fillType != FillType.ALL) {
                     fillPath.set(renderPath)
 
-                    Log.d("ComputeRender", "#$identifier generating fillPath start=${renderPoints[0]}, end=${point}")
+//                    Log.d("ComputeRender", "#$identifier generating fillPath start=${renderPoints[0]}, end=${point}")
                 }
 
                 val fillFlags = fillType
@@ -571,7 +571,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
         val xrange: Float = max(rawGraphableList.size.toFloat(), 2f) - 1f // range is always at least 2 points (in a line)
 //        val xscale = (viewDimensions.width + lineWidth) / xrange
         val xscale = (viewDimensions.width - (horizontalPadding * 2)) / xrange
-        println("xrange: $xrange [${adapter.data.size.toFloat()} : ${rawGraphableList.size.toFloat()}]")
+//        println("xrange: $xrange [${adapter.data.size.toFloat()} : ${rawGraphableList.size.toFloat()}]")
 
         val yscale =  verticalRatio * (adjustedViewHeight - 2 * lineWidth) /
                 if (scaleMode == ScaleMode.FIT) range else (globalAlignGuideline.range)
@@ -592,7 +592,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
         val startPointPreAdjust = fitVertically(start.y)
         val adjustPoint = fitVertically(adjust)
         val adjustPx = adjustPoint - (startPointPreAdjust) - verticalRatioInset
-        val logging = true
+        val logging = false
         @Suppress("ConstantConditionIf")
         if (logging) {
             when(scaleMode) {

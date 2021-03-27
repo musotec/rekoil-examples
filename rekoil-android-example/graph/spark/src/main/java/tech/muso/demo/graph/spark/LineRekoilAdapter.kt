@@ -107,7 +107,8 @@ class LineRekoilAdapter(
 
         // avoid empty case
         if (closestEndPointIndex - closestStartPointIndex < 2) return@selector null
-        Log.w("SELECTOR", "[$id] closestStart: $closestStartPointIndex, closestEnd: $closestEndPointIndex")
+
+//        Log.w("SELECTOR", "[$id] closestStart: $closestStartPointIndex, closestEnd: $closestEndPointIndex")
 
         try {
             val rightHandApprox =
