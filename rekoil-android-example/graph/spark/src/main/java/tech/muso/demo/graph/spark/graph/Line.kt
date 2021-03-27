@@ -16,7 +16,8 @@ import tech.muso.demo.graph.spark.types.*
 import tech.muso.demo.graph.core.Graphable
 import tech.muso.demo.graph.core.PointGraphable
 import tech.muso.demo.graph.spark.FifoList
-import tech.muso.demo.graph.spark.animation.SlideAnimator
+import tech.muso.demo.graph.spark.animation.GraphableAnimator
+import tech.muso.demo.graph.spark.animation.MorphAnimator
 import tech.muso.rekoil.core.Atom
 import tech.muso.rekoil.core.RekoilScope
 import tech.muso.rekoil.core.launch
@@ -24,6 +25,7 @@ import tech.muso.rekoil.ktx.getValue
 import tech.muso.rekoil.ktx.setValue
 import java.lang.IndexOutOfBoundsException
 import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -134,7 +136,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
     private val lineWidthAtom: Atom<Float> = rekoilScope.atom { builder.lineWidth }
     var lineWidth: Float by lineWidthAtom
 
-    private val fillTypeAtom: Atom<Int> = rekoilScope.atom { FillType.NONE }
+    private val fillTypeAtom: Atom<Int> = rekoilScope.atom { FillType.TOWARD_ZERO }
     var fillType: Int by fillTypeAtom
     init {
         rekoilScope.selector {
@@ -303,13 +305,12 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
         }
 
 
-    private val rawGraphableList get() = adapter.data //arrayListOf<Graphable>()
-    private var postAnimationGraphables = FifoList<Graphable>(adapter.data.capacity)
-    private var renderedCandles = mutableListOf<CandleGraphable>()
+    private val rawGraphableList get() = adapter.data
+    private var postAnimationGraphables = FifoList<Graphable>(rawGraphableList.capacity)
 
     // TODO: support other types of animation
-//    private val animator = MorphAnimator(renderedPoints)
-    private val animator = SlideAnimator(postAnimationGraphables)
+    private val animator: GraphableAnimator = MorphAnimator(postAnimationGraphables)
+//    private val animator: GraphableAnimator = SlideAnimator(postAnimationGraphables)
 
     private var animateFrame = true
 
@@ -328,34 +329,43 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
 
         animator.duration = (300L * speed).toLong()
 
-        Log.w("AnimateTransition", "#$identifier creating path animation: Assumptions [ globalAlignScale=$globalAlignGuideline; max=$max, min=$min, start=$start, end=$end; verticalRatio=$verticalRatio; ]")
-        Log.w("AnimateTransition", "#$identifier creating path animation: RenderStart [ start=${postAnimationGraphables.first()}, end=${postAnimationGraphables.last()} ]")
-        Log.w("AnimateTransition", "#$identifier creating path animation: RawTransformDestination [ start=${rawGraphableList.first()}, end=${rawGraphableList.last()} ]")
+//        Log.w("AnimateTransition", "#$identifier creating path animation: Assumptions [ globalAlignScale=$globalAlignGuideline; max=$max, min=$min, start=$start, end=$end; verticalRatio=$verticalRatio; ]")
+//        Log.w("AnimateTransition", "#$identifier creating path animation: RenderStart [ start=${postAnimationGraphables.first()}, end=${postAnimationGraphables.last()} ]")
+//        Log.w("AnimateTransition", "#$identifier creating path animation: RawTransformDestination [ start=${rawGraphableList.first()}, end=${rawGraphableList.last()} ]")
 
-        // in a new array, compute the final path
-        val computedFinalPath = computeRenderingGraphables(rawGraphableList)
-        if (computedFinalPath.isNotEmpty()) Log.w("AnimateTransition", "#$identifier creating path animation: RenderEnd [ start=${computedFinalPath.first()}, end=${computedFinalPath.last()} ]")
+        // update the capacity in case it changed
+        postAnimationGraphables.capacity = rawGraphableList.capacity
 
-        // abort animation if start = end (nothing to do)
-        if (computedFinalPath.first() == postAnimationGraphables.first() &&
-            computedFinalPath.last() == postAnimationGraphables.last()) {
-            // TODO: this equality check is not valid if middle points move // FIXME outside of demo
-            return // exit before starting animator.
+        rawGraphableList.useLock {  // use lock during mutation of graphables
+            // in a new array, compute the final path
+            val computedFinalPath = scaleGraphables(rawGraphableList)
+            if (computedFinalPath.isNotEmpty()) Log.w(
+                "AnimateTransition",
+                "#$identifier creating path animation: RenderEnd [ start=${computedFinalPath.first()}, end=${computedFinalPath.last()} ]"
+            )
+
+            // abort animation if start = end (nothing to do)
+            if (computedFinalPath.first() == postAnimationGraphables.first() &&
+                computedFinalPath.last() == postAnimationGraphables.last()
+            ) {
+                // TODO: this equality check is not valid if middle points move // FIXME outside of demo
+                return@useLock // exit before starting animator.
+            }
+
+            // if our rendered points list has bad info (scale not yet set) then don't animate
+            if (postAnimationGraphables.first().y.isNaN() || postAnimationGraphables.last().y.isNaN()) {
+                onAnimationFinished()   // just populate
+                return@useLock
+            }
+
+            // TODO: improve readability by using builder pattern.
+            animator.animateToDataSet(computedFinalPath, onAnimationFinished) {
+                // do on animation frame
+                rasterize(postAnimationGraphables)
+                rasterizeClipFillPath(postAnimationGraphables)
+                adapter.redraw()
+            }.start()
         }
-
-        // if our rendered points list has bad info (scale not yet set) then don't animate
-        if (postAnimationGraphables.first().y.isNaN() || postAnimationGraphables.last().y.isNaN()) {
-            onAnimationFinished()   // just populate
-            return
-        }
-
-        // TODO: improve readability by using builder pattern.
-        animator.animateToDataSet(computedFinalPath, onAnimationFinished) {
-            // do on animation frame
-            rasterize(postAnimationGraphables)
-            rasterizeClipFillPath(postAnimationGraphables)
-            adapter.redraw()
-        }.start()
     }
 
     private fun populateDataPath() {
@@ -386,17 +396,21 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
         renderPath.reset()
         fillPath.reset()
         Log.e("Line", "#$identifier populateRenderingPath()")
-        computeRenderingGraphables(rawGraphableList, postAnimationGraphables)
-        rasterize(postAnimationGraphables)
-        rasterizeClipFillPath(postAnimationGraphables)   // populate path when finished for fill
-        adapter.validate()
-        adapter.redraw()
+        // update the capacity in case it changed
+        postAnimationGraphables.capacity = rawGraphableList.capacity
+        rawGraphableList.useLock {  // use lock during mutation of graphables
+            scaleGraphables(rawGraphableList, postAnimationGraphables)
+            rasterize(postAnimationGraphables)
+            rasterizeClipFillPath(postAnimationGraphables)   // populate path when finished for fill
+            adapter.validate()
+            adapter.redraw()
+        }
     }
 
     private var renderCount = 0    // should always equal rawDataPoints-1
 
     private fun rasterize(animatedGraphables: MutableList<Graphable>) {
-        if (animatedGraphables.isEmpty() || renderLinesFloatArray.isEmpty()) return
+        if (animatedGraphables.isEmpty() || renderLinesFloatArray.isEmpty() || rawGraphableList.isEmpty()) return
 
         val lineCount = rawGraphableList.size - 1
         var index = 0
@@ -484,8 +498,8 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
                     }
                     FillType.TOWARD_ZERO -> {
                         // TODO: find zero on graph and bisect; avoid suspicious axis assumptions
-                        fillPath.lineTo(point.x, adapter.axisArray[0].renderPoints[0].y)
-                        fillPath.lineTo(0f, adapter.axisArray[0].renderPoints[0].y)
+                        fillPath.lineTo(point.x, adapter.axisArray[0].renderPointsOut[0].y)
+                        fillPath.lineTo(0f, adapter.axisArray[0].renderPointsOut[0].y)
                     }
                     FillType.ALL -> {
                         fillPath.moveTo(0f, 0f)
@@ -546,17 +560,18 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
     /**
      * Populate the rendering path based on the state of the animation.
      */
-    private fun computeRenderingGraphables(
-        dataPoints: List<Graphable>,
-        preRenderGraphables: MutableList<Graphable> = arrayListOf()
+    private fun scaleGraphables(
+        rawGraphableList: List<Graphable>,
+        preRenderGraphableListOut: MutableList<Graphable> = arrayListOf()
     ): List<Graphable> {
-        if (dataPoints.isEmpty()) return preRenderGraphables
+        if (rawGraphableList.isEmpty()) return preRenderGraphableListOut
 
         val adjustedViewHeight = viewDimensions.height * (1f - topMargin - bottomMargin)
-
-        val xrange: Float = max(adapter.data.size.toFloat(), 2f) - 1f // range is always at least 2 points (in a line)
+        val horizontalPadding = 10f
+        val xrange: Float = max(rawGraphableList.size.toFloat(), 2f) - 1f // range is always at least 2 points (in a line)
 //        val xscale = (viewDimensions.width + lineWidth) / xrange
-        val xscale = (viewDimensions.width ) / xrange
+        val xscale = (viewDimensions.width - (horizontalPadding * 2)) / xrange
+        println("xrange: $xrange [${adapter.data.size.toFloat()} : ${rawGraphableList.size.toFloat()}]")
 
         val yscale =  verticalRatio * (adjustedViewHeight - 2 * lineWidth) /
                 if (scaleMode == ScaleMode.FIT) range else (globalAlignGuideline.range)
@@ -610,12 +625,13 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
         }
 
         // add the points to the list of rendered points
-        preRenderGraphables.clear()
-        val isCandle = (dataPoints[0] is CandleGraphable)
-        dataPoints.mapIndexedTo(preRenderGraphables) { i, graphable ->
+        preRenderGraphableListOut.clear()
+        val isCandle = (rawGraphableList[0] is CandleGraphable)
+        // transform dataPoints and store them into preRenderGraphables
+        rawGraphableList.mapIndexedTo(preRenderGraphableListOut) { i, graphable ->
+//        dataPoints.mapIndexed { i, graphable ->
             // TODO: clean up this
-            val x = i * xscale.toFloat()
-//            println("x ${i/xrange}")
+            val x = horizontalPadding + (i.toFloat() * xscale)
             val y = applyScaling(graphable.y)
 
             if (isCandle) {
@@ -631,39 +647,13 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
                     )
 
                 renderCandlesArray[i] = finalCandle
-
-//                if (renderedCandles.size > i) {
-//                    renderedCandles[i] = finalCandle
-//                } else {
-//                    renderedCandles.add(finalCandle)
-//                }
             }
 
+            // return as a Candle or a PointF
             if (isCandle) renderCandlesArray[i]!! else PointGraphable(x,y)
         }
-
-        // FIXME: this is better than making a lot of new PointF objects, but I need to fix the bug
-//        if (dataPoints.isEmpty()) return renderPoints
-//        if (renderPoints.size == 0) {
-//            for (i in dataPoints.indices) {
-//                renderPoints.add(PointF(0f, 0f))
-//            }
-//        }
-//
-//        for (i in dataPoints.indices) {
-//            val x = i * xscale
-//            val y = applyScaling(dataPoints[i].y)
-//            renderPoints[i].x = x
-//            renderPoints[i].y = y
-//        }
-//
-//        if (renderPoints.size > dataPoints.size) {
-//            for (i in renderPoints.size downTo dataPoints.size) {
-//                renderPoints.removeAt(i - 1)
-//            }
-//        }
-
-        return preRenderGraphables
+        // return our graphables for rasterization
+        return preRenderGraphableListOut
     }
 
     private fun generateFillPaint(maxValue: Float) {
@@ -734,8 +724,12 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
 //            "draw($canvas)[${viewDimensions.width} x ${viewDimensions.height}] #$identifier range: ($min, $max) d[$range] (start: ${start.y}, end: ${end.y})"
 //        )
 
+        // update the capacity in case it changed
+        postAnimationGraphables.capacity = rawGraphableList.capacity
         adapter.axisArray.forEach {
-            it.draw(canvas, viewDimensions, this::computeRenderingGraphables)
+            it.draw(canvas, viewDimensions) { points, renderPointsOut ->
+                scaleGraphables(points, renderPointsOut as MutableList<Graphable>)
+            }
         }
 
         // TODO: Determine how long the render takes to convert to path + fill for the area;

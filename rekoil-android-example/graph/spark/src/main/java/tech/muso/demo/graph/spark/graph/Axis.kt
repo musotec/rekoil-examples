@@ -3,12 +3,8 @@ package tech.muso.demo.graph.spark.graph
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.PointF
-import tech.muso.demo.graph.core.CandleGraphable
-import tech.muso.demo.graph.core.Graphable
 import tech.muso.demo.graph.core.PointGraphable
 import tech.muso.demo.graph.spark.types.ViewDimensions
-import kotlin.reflect.KFunction2
 
 /**
  * Represents an axis that extends infinitely in a specific direction.
@@ -29,28 +25,31 @@ data class Axis(var position: Float,
     val endPoint: PointGraphable = if (isHorizontal) PointGraphable(-1f, position) else PointGraphable(position, -1f)
 
     private val points = listOf(startPoint, endPoint)
-    val renderPoints = arrayListOf<PointF>()
+    val renderPointsOut = arrayListOf<PointGraphable>()
 
     /**
      * Draw the axis to the canvas.
      *
      * TODO: FIX THIS TO BE GOOD INSTEAD OF WHAT IT IS
      */
-    fun draw(canvas: Canvas, viewDimensions: ViewDimensions,
-             computeFunction: KFunction2<List<Graphable>, MutableList<Graphable>, List<Graphable>>) {
+    fun draw(canvas: Canvas, viewDimensions: ViewDimensions, getAlignment: (List<PointGraphable>, MutableList<PointGraphable>) -> Unit) {
 //        if (isHorizontal)
 //            canvas.drawLine(0f, position, viewDimensions.width, position, paint)
 //        else
 //            canvas.drawLine(position, 0f, position, viewDimensions.height, paint)
 
         // TODO: THIS CODE BELOW IS GOOD PROBABLY
-//        if (points[1].x != 0f) points[1].x = viewDimensions.width
-//        if (points[1].y != 0f) points[1].y = viewDimensions.height
-//
+        if (points[1].x != 0f) points[1].x = viewDimensions.width
+        if (points[1].y != 0f) points[1].y = viewDimensions.height
+
 //        computeFunction(points, renderPoints)
-//
-//        if (isHorizontal) renderPoints[1].x = viewDimensions.width
-//
-//        canvas.drawLine(renderPoints[0].x, renderPoints[0].y, renderPoints[1].x, renderPoints[1].y, paint)
+        getAlignment(points, renderPointsOut)
+
+//        renderPoints[0].y = alignBy
+//        renderPoints[1].y = alignBy
+
+        if (isHorizontal) renderPointsOut[1].x = viewDimensions.width
+
+        canvas.drawLine(renderPointsOut[0].x, renderPointsOut[0].y, renderPointsOut[1].x, renderPointsOut[1].y, paint)
     }
 }

@@ -2,6 +2,7 @@ package tech.muso.demo.graph.spark
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import kotlinx.coroutines.runBlocking
 import tech.muso.demo.graph.core.Graphable
 import tech.muso.rekoil.core.Atom
 import tech.muso.rekoil.core.RekoilScope
@@ -42,5 +43,13 @@ class MinMaxGraphableQueue<T : Graphable>(
         minHeap.remove(e)
         updateHeaps()
         return e
+    }
+
+    override fun clear() {
+        super.clear()
+        maxHeap.clear()
+        minHeap.clear()
+        min.value = initialValue.bottom
+        max.value = initialValue.top
     }
 }

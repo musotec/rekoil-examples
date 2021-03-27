@@ -2,58 +2,20 @@ package tech.muso.demo.graph.spark.animation
 
 import android.animation.Animator
 import android.animation.TimeInterpolator
-import android.animation.ValueAnimator
-import android.graphics.PointF
 import android.util.Log
 import androidx.core.animation.addListener
+import tech.muso.demo.graph.core.Graphable
+import tech.muso.demo.graph.core.NullGraphable
+import tech.muso.demo.graph.spark.FifoList
 import java.lang.IndexOutOfBoundsException
 import kotlin.math.ceil
 import kotlin.math.max
 
-class MorphAnimator(val renderPoints: MutableList<PointF>): Animator() {
-    val valueAnimator = ValueAnimator.ofFloat(0f, 1f)
+class MorphAnimator(graphables: FifoList<Graphable>): GraphableAnimator(graphables) {
 
     // TODO: look into [Path.approximate(float acceptableError)] for API 26+
-
     // TODO: handle extra point generation, potentially label points as approximations???
     companion object {
-
-        /** Linear interpolation between `startValue` and `endValue` by `fraction`.  */
-        @JvmStatic fun lerp(startValue: Float, endValue: Float, fraction: Float): Float {
-            return startValue + fraction * (endValue - startValue)
-        }
-
-        /** Linearly interpolate a list of the points between `startValue` and `endValue`
-         *  by the total number of `steps` including the start and end points.
-         *  The returned list will not include the start value.
-         */
-        @JvmStatic fun lerp(startValue: Float, endValue: Float, steps: Int): List<Float> {
-            return (1 .. steps).map {
-                lerp(startValue, endValue, it.toFloat()/steps)
-            }
-        }
-
-        @JvmStatic fun lerp(startPoint: PointF, endPoint: PointF, steps: Int): List<PointF> {
-            // TODO: worry about performance of this
-            val xInterpolation = lerp(startPoint.x, endPoint.x, steps)
-            val yInterpolation = lerp(startPoint.y, endPoint.y, steps)
-            return xInterpolation.mapIndexed { i, x ->
-                PointF(x, yInterpolation[i])
-            }
-        }
-
-        /**
-         * Get the greatest common factor using euclidean algorithm.
-         */
-        fun gcf(first: Int, second: Int): Int {
-            // make sure that a > b
-            val a = if (first > second) first else second
-            var b = if (second < first) second else first
-            var c = a - b
-            while (c > b) c -= b
-            while (b - c < 0) b -= c
-            return b
-        }
 
         /**
          * Compute the nearest fraction between [0, 1) by walking a Stern-Brocot tree.
@@ -92,21 +54,26 @@ class MorphAnimator(val renderPoints: MutableList<PointF>): Animator() {
             }
         }
     }
-    lateinit var endingPointsAdjusted: List<PointF>
-    lateinit var startingPointsAdjusted: List<PointF>
+
+    lateinit var endingPointsAdjusted: List<Graphable>
+    lateinit var startingPointsAdjusted: List<Graphable>
 
     @OptIn(ExperimentalStdlibApi::class)
-    fun animatePathToDataSet(endingPoints: List<PointF>, doOnFinish: () -> Unit, doOnUpdate: () -> Unit): Animator {
-        if (endingPoints.isEmpty()) {
+    override fun animateToDataSet(
+        endingGraphables: List<Graphable>,
+        doOnFinish: () -> Unit,
+        doOnUpdate: () -> Unit
+    ) : Animator {
+        if (endingGraphables.isEmpty()) {
             return this
         }
 
-        val startSize = renderPoints.size
-        val endSize = endingPoints.size
+        val startSize = graphables.size
+        val endSize = endingGraphables.size
         val totalPointsAnimation = max(startSize, endSize)
 
         endingPointsAdjusted = if (startSize <= totalPointsAnimation) {
-            endingPoints
+            endingGraphables
 //                .also { Log.e("POINT", "endingPoints.size = ${it.size}") }
         } else {
             // amount of points to interpolate
@@ -114,12 +81,13 @@ class MorphAnimator(val renderPoints: MutableList<PointF>): Animator() {
                 (ceil(startSize.toDouble()/endSize) + 2).toInt() // add 2 for start/end of lerp
 
             // save list of start point so we can merge; since our lerp excludes the first value
-            listOf(endingPoints[0]) + (
+            listOf(endingGraphables[0]) + (
             // iterate from bottom to top joining the lists doing a lerp between points
-            endingPoints.windowed(2, 1).map {
-                val start: PointF = it[0]
-                val end: PointF = it[1]
-                lerp(start, end, stepSize)  // generate a list of the points between
+            endingGraphables.windowed(2, 1).map {
+                val start = it[0]
+                val end   = it[1]
+                start.lerpBetween(end, stepSize)
+//                lerp(start, end, stepSize)  // generate a list of the points between
             }).flatten().also { Log.e("POINT", "endingPoints flatten.size = ${it.size}") }    // now flatten our list of lists
         }
 
@@ -127,7 +95,7 @@ class MorphAnimator(val renderPoints: MutableList<PointF>): Animator() {
         startingPointsAdjusted = when {
             endSize < totalPointsAnimation -> {
                 // ensure equal size before iterating during the animation by extending extra points to last value.
-                renderPoints + (0..(endingPointsAdjusted.size + 1 - renderPoints.size)).map { renderPoints[startSize - 1] }
+                graphables + (0..(endingPointsAdjusted.size + 1 - graphables.size)).map { graphables[startSize - 1] }
                 // this saves us from having to do an index check during our map inside the animation.
             }
             endSize != startSize -> {
@@ -146,7 +114,7 @@ class MorphAnimator(val renderPoints: MutableList<PointF>): Animator() {
 
                 buildList(endSize) {
                     // window by one extra each time to have last value be next lerp.
-                    renderPoints.windowed(reducedStart, reducedStart, partialWindows = true).forEach {
+                    graphables.windowed(reducedStart, reducedStart, partialWindows = true).forEach {
                         addAll(it) // add the window
                         // then fill the remaining points
                         for (i in reducedStart until reducedEnd) {
@@ -160,7 +128,7 @@ class MorphAnimator(val renderPoints: MutableList<PointF>): Animator() {
             }
             endSize == startSize -> {
                 buildList(endSize) {
-                    addAll(renderPoints)
+                    addAll(graphables)
                 }
             }
             else -> {
@@ -169,46 +137,46 @@ class MorphAnimator(val renderPoints: MutableList<PointF>): Animator() {
                 val stepSize: Int =
                     (ceil(endSize.toDouble()/startSize) + 2).toInt() // add 2 for start/end of lerp
 
-                listOf(renderPoints[0]) + (
+                listOf(graphables[0]) + (
                         // iterate from bottom to top joining the lists doing a lerp between points
-                        renderPoints.windowed(2, 1).map {
-                            val start: PointF = it[0]
-                            val end: PointF = it[1]
-                            lerp(start, end, stepSize)  // generate a list of the points between
+                        graphables.windowed(2, 1).map {
+                            val start = it[0]
+                            val end   = it[1]
+                            start.lerpBetween(end, stepSize)  // generate a list of the points between
                         }).flatten() // flatten our list of lists (from windowed mapping of lerps)
             }
         }
 
-
-        // clear existing points, as the mapTo function adds to the list instead of overwriting
-        renderPoints.clear()
         val totalPoints = max(endingPointsAdjusted.size, startingPointsAdjusted.size)
 
+        // clear existing points, and we will overwrite them
+        graphables.clear()
         for (i in 0..totalPoints) {
-            renderPoints.add(PointF(0f, 0f))
+            graphables.add(NullGraphable())
         }
 
+        // animate the graphables in the array.
         valueAnimator.addUpdateListener {
             val ratio: Float = it.animatedValue as Float
+
             // map points; total points may be larger when this evaluates
             for (i in 0..totalPoints) {
 
-                val endPoint = try {
-                    endingPointsAdjusted[i]
-                } catch (ex: IndexOutOfBoundsException) {
+                val endPoint = if (i >= endingPointsAdjusted.size) {
                     endingPointsAdjusted.last()
+                } else {
+                    endingPointsAdjusted[i]
                 }
 
-                val startPoint = try {
-                    startingPointsAdjusted[i]
-                } catch (ex: IndexOutOfBoundsException) {
+                val startPoint = if (i >= startingPointsAdjusted.size) {
                     startingPointsAdjusted.last()
+                } else {
+                    startingPointsAdjusted[i]
                 }
 
                 // index may exceed number of render points because line has shrunk in size
                 try {
-                    renderPoints[i].x = lerp(startPoint.x, endPoint.x, ratio)
-                    renderPoints[i].y = lerp(startPoint.y, endPoint.y, ratio)
+                    graphables[i] = startPoint.lerpTo(endPoint, ratio)
                 } catch (ex: IndexOutOfBoundsException) {
                     break   // in this case, exit the for loop
                 }

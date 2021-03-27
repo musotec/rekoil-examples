@@ -1,9 +1,7 @@
 package tech.muso.demo.graph.spark
 
 
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import tech.muso.demo.graph.core.CandleGraphable
 import tech.muso.demo.graph.spark.graph.Axis
 import tech.muso.demo.graph.spark.graph.Line
@@ -63,100 +61,96 @@ class LineRekoilAdapter(
     val min get() = data.min
     val max get() = data.max
 
-//    private val selectionRange = selector {
-////        val data = get(data)
-//        val first = get(end)!!
-//        val last = get(start)!!
-//
-//        var startPct = get(globals.globalSelectionStartPct)
-//        var endPct = get(globals.globalSelectionEndPct)
-//
-//        // swap points if they are backwards
-//        if (endPct < startPct) {
-//            val tmp = startPct
-//            startPct = endPct
-//            endPct = tmp
-//        }
-//
-//        if (startPct == 0f || endPct == 0f) return@selector LinearDomain(0,0)
-//
-//        val range = last.x - first.x
-//        val start = range * startPct + first.x
-//        val end = range * endPct + first.x
-//
-//        var closestStartPointIndex = data.binarySearch { pointF -> pointF.x.compareTo(start) }
-//        var closestEndPointIndex = data.binarySearch { pointF -> pointF.x.compareTo(end) }
-//
-//        // have to adjust because binarySearch returns negative if index not found
-//        if (closestStartPointIndex < 0) closestStartPointIndex = -1 * closestStartPointIndex - 1
-//        if (closestEndPointIndex < 0) closestEndPointIndex = -1 * closestEndPointIndex - 1
-//
-//        LinearDomain(closestStartPointIndex, closestEndPointIndex)
-//    }
-
-//    val selectionStartPoint = selector {
-//        val range = get(selectionRange) ?: return@selector null
-//        val data = get(data).also { if (it.isEmpty()) return@selector null }
-//        data[range.start]
-//    }
-//
-//    val selectionEndPoint = selector {
-//        val range = get(selectionRange) ?: return@selector null
-//        val data = get(data).also { if (it.isEmpty()) return@selector null }
-//        data[range.end.coerceIn(0, data.size - 1)]
-//    }
-
-//    val trapezoidalIntegralApprox = selector {
+    private val selectionRange = selector {
 //        val data = get(data)
-//        val (closestStartPointIndex, closestEndPointIndex) = get(selectionRange) ?: return@selector null
-//
-//        // avoid empty case
-//        if (closestEndPointIndex - closestStartPointIndex < 2) return@selector null
-//
-//        Log.w("SELECTOR", "[$id] closestStart: $closestStartPointIndex, closestEnd: $closestEndPointIndex")
-//
-//        try {
-//            val rightHandApprox =
-//                data.subList(closestStartPointIndex, closestEndPointIndex).map { p -> p.y }
-//                    .reduce { fl, acc ->
-//                        fl + acc
-//                    }
-//            val leftHandApprox =
-//                data.subList(closestStartPointIndex + 1, closestEndPointIndex + 1).map { p -> p.y }
-//                    .sum()
-//
-//            return@selector (rightHandApprox + leftHandApprox) / 2f
-//        } catch (ignored: Exception) {
-//            return@selector null
-//        }
-//    }
+        val first = get(start)!!
+        val last = get(end)!!
 
-//    val deltaX: Selector<Double?> = selector {
-//        // FIXME: assumes points equally spaced; x/time axis not actually implemented.
-//        val data = get(data).also { if (it.isEmpty()) return@selector null }
+        var startPct = get(globals.globalSelectionStartPct)
+        var endPct = get(globals.globalSelectionEndPct)
+
+        // swap points if they are backwards
+        if (endPct < startPct) {
+            val tmp = startPct
+            startPct = endPct
+            endPct = tmp
+        }
+
+        if (startPct == 0f || endPct == 0f) return@selector LinearDomain(0,0)
+
+        val range = last.x - first.x
+        val start = range * startPct + first.x
+        val end = range * endPct + first.x
+
+        var closestStartPointIndex = data.binarySearch { pointF -> pointF.x.compareTo(start) }
+        var closestEndPointIndex = data.binarySearch { pointF -> pointF.x.compareTo(end) }
+
+        // have to adjust because binarySearch returns negative if index not found
+        if (closestStartPointIndex < 0) closestStartPointIndex = -1 * closestStartPointIndex - 1
+        if (closestEndPointIndex < 0) closestEndPointIndex = -1 * closestEndPointIndex - 1
+
+        LinearDomain(closestStartPointIndex, closestEndPointIndex)
+    }
+
+    val selectionStartPoint = selector {
+        val range = get(selectionRange) ?: return@selector null
+        if (data.isEmpty()) null else data[range.start.coerceIn(0, data.size - 1)]
+    }
+
+    val selectionEndPoint = selector {
+        val range = get(selectionRange) ?: return@selector null
+        if (data.isEmpty()) null else data[range.end.coerceIn(0, data.size - 1)]
+    }
+
+    val trapezoidalIntegralApprox = selector {
+        val (closestStartPointIndex, closestEndPointIndex) = get(selectionRange) ?: return@selector null
+
+        // avoid empty case
+        if (closestEndPointIndex - closestStartPointIndex < 2) return@selector null
+        Log.w("SELECTOR", "[$id] closestStart: $closestStartPointIndex, closestEnd: $closestEndPointIndex")
+
+        try {
+            val rightHandApprox =
+                data.subList(closestStartPointIndex, closestEndPointIndex).map { p -> p.y }
+                    .reduce { fl, acc ->
+                        fl + acc
+                    }
+            val leftHandApprox =
+                data.subList(closestStartPointIndex + 1, closestEndPointIndex + 1).map { p -> p.y }
+                    .sum()
+            return@selector (rightHandApprox + leftHandApprox) / 2f
+        } catch (ignored: Exception) {
+            return@selector null
+        }
+    }
+
+    val deltaX: Selector<Double?> = selector {
+        // FIXME: assumes points equally spaced; x/time axis not actually implemented.
 //        val (closestStartPointIndex, closestEndPointIndex) = get(selectionRange) ?: return@selector null
+//        if (data.isEmpty()) null else
 //        (data[closestEndPointIndex.coerceAtMost(data.size-1)].x - data[closestStartPointIndex].x).toDouble()
-//    }
-//
-//    val mean: Selector<Double?> = selector {
-//        val data = get(data).also { if (it.isEmpty()) return@selector null }
-//        val (closestStartPointIndex, closestEndPointIndex) = get(selectionRange) ?: return@selector null
+        0.0
+    }
+
+    val mean: Selector<Double?> = selector {
+        val (closestStartPointIndex, closestEndPointIndex) = get(selectionRange) ?: return@selector null
 //        data.subList(closestStartPointIndex, closestEndPointIndex).run {
 //            sumByDouble { it.y.toDouble() } / size
 //        }
-//    }
+        0.0
+    }
 
-//    val variance: Selector<Double?> = selector {
-//        val data = get(data).also { if (it.isEmpty()) return@selector null }
-//        val mean = get(mean) ?: return@selector null
-//        val (closestStartPointIndex, closestEndPointIndex) = get(selectionRange) ?: return@selector null
+    val variance: Selector<Double?> = selector {
+        val mean = get(mean) ?: return@selector null
+        val (closestStartPointIndex, closestEndPointIndex) = get(selectionRange) ?: return@selector null
 //        data.subList(closestStartPointIndex, closestEndPointIndex).run {
 //            map {
 //                val v = (it.y - mean)
 //                return@map v*v
 //            }.sum() / (size - 1)
 //        }
-//    }
+        0.0
+    }
 
     val start: Selector<Graphable?> = selector {
 //        val data = get(data).also { if (it.isEmpty()) return@selector null }

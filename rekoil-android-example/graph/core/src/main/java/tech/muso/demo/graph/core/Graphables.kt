@@ -14,6 +14,11 @@ interface Graphable {
     }
 
     fun lerpTo(other: Graphable, ratio: Float): Graphable
+    fun lerpBetween(other: Graphable, steps: Int): List<Graphable> {
+        return (1 .. steps).map {
+            this.lerpTo(other, it.toFloat()/steps)
+        }
+    }
 
     val top: Float
     val bottom: Float

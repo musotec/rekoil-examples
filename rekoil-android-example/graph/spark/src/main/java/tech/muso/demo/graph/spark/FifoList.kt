@@ -2,7 +2,7 @@ package tech.muso.demo.graph.spark
 
 import java.util.*
 
-class FifoList<E>(val capacity: Int) : AbstractList<E>() {
+class FifoList<E>(var capacity: Int) : AbstractList<E>() {
     private val linkedList =  LinkedList<E>()
 
     override fun add(e: E): Boolean {
