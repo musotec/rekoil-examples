@@ -11,7 +11,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.lang.Exception
 
-
+/**
+ * Android Client example for interfacing with stonky (https://github.com/musotec/stonky)
+ */
 fun subscribe(symbol: String): Flow<String> = flow {
     try {
         // connect to the server (localhost:8080; maps to 10.0.2.2:8080 inside the android emulator)

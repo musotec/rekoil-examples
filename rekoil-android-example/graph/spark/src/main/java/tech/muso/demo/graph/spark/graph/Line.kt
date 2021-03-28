@@ -18,6 +18,7 @@ import tech.muso.demo.graph.core.PointGraphable
 import tech.muso.demo.graph.spark.FifoList
 import tech.muso.demo.graph.spark.animation.GraphableAnimator
 import tech.muso.demo.graph.spark.animation.MorphAnimator
+import tech.muso.demo.graph.spark.animation.SlideAnimator
 import tech.muso.rekoil.core.Atom
 import tech.muso.rekoil.core.RekoilScope
 import tech.muso.rekoil.core.launch
@@ -80,7 +81,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
             }
 
             // selector to handle data invalidation
-            val dataSelector = selector {
+            val dataSelector = selector {   // TODO: remove. this should be obsolete
                 // trigger on the following atoms
 //                get(adapter.data) // if data changes, start animation
                 get(adapter.start)
@@ -308,7 +309,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
     private val rawGraphableList get() = adapter.data
     private var postAnimationGraphables = FifoList<Graphable>(rawGraphableList.capacity)
 
-    // TODO: support other types of animation
+    // TODO: support specification of Animation type
     private val animator: GraphableAnimator = MorphAnimator(postAnimationGraphables)
 //    private val animator: GraphableAnimator = SlideAnimator(postAnimationGraphables)
 
@@ -368,7 +369,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
         }
     }
 
-    private fun populateDataPath() {
+    private fun populateDataPath() { // TODO: remove this. not needed as we use the array directly?
 //        adapter.let {
 //            /*
 //             * Generate the list of raw data points for reference during animation.
@@ -626,7 +627,7 @@ data class Line private constructor(private val rekoilScope: RekoilScope, privat
 
         // add the points to the list of rendered points
         preRenderGraphableListOut.clear()
-        val isCandle = (rawGraphableList[0] is CandleGraphable)
+        val isCandle = (rawGraphableList[0] is CandleGraphable) && renderCandlesArray.isNotEmpty()
         // transform dataPoints and store them into preRenderGraphables
         rawGraphableList.mapIndexedTo(preRenderGraphableListOut) { i, graphable ->
 //        dataPoints.mapIndexed { i, graphable ->

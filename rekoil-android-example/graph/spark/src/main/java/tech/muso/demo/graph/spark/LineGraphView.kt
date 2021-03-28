@@ -133,6 +133,13 @@ class LineGraphView(context: Context, attrs: AttributeSet) : View(context, attrs
             override fun toString(): String {
                 return "[$id]"
             }
+
+            override fun equals(other: Any?): Boolean {
+                if (other is NodeIdSizePair<*>) {
+                    return id == other.id && size == other.size
+                }
+                return super.equals(other)
+            }
         }
         companion object {
             const val DEBUG_FIB_HEAP = false
@@ -361,11 +368,6 @@ class LineGraphView(context: Context, attrs: AttributeSet) : View(context, attrs
 
         // at the end (so that we make sure the new rekoil adapter is good)
         lines.value = newList
-
-        // alternatively? TODO: REMOVE?
-//        lineRekoilAdapters.value.add(lineRekoilAdapter).also { invalidate() }
-//        lines.invalidate()
-
         return line
     }
 

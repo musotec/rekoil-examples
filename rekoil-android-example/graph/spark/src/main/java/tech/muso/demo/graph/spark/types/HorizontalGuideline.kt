@@ -18,4 +18,14 @@ data class HorizontalGuideline(
     val range: Float get() = above + below
 
 //    val percent: Float = TODO("percentage from top/bottom")
+
+    /**
+     * Override equals to prevent Atom from triggering selectors.
+     */
+    override fun equals(other: Any?): Boolean {
+        if (other is HorizontalGuideline) {
+            return above == other.above && below == other.below
+        }
+        return super.equals(other)
+    }
 }

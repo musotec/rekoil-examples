@@ -38,10 +38,8 @@ android {
 }
 
 dependencies {
-//    compile fileTree(dir: 'libs', include: ['*.jar'])
     api project(":graph:core")
-    compile files('libs/rekoil-0.0.1-20210324.211156-72.jar')
-//    api "tech.muso.rekoil:rekoil-jvm:0.0.2"
+    api "tech.muso.rekoil:rekoil:0.0.3"
 
     implementation libraries
 

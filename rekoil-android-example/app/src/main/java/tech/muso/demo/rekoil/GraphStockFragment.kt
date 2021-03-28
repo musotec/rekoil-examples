@@ -14,19 +14,12 @@ import com.google.android.material.tabs.TabLayout
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import tech.muso.demo.graph.core.CandleGraphable
-import tech.muso.demo.graph.core.PointGraphable
 import tech.muso.demo.graph.spark.LineGraphView
-import tech.muso.demo.graph.spark.LineRekoilAdapter
 import tech.muso.demo.graph.spark.R
 import tech.muso.demo.graph.spark.graph.Line
-import tech.muso.demo.graph.spark.helpers.compose
-import tech.muso.demo.graph.spark.helpers.generate
 import tech.muso.rekoil.core.Atom
 import tech.muso.rekoil.core.RekoilScope
-import tech.muso.rekoil.core.Selector
 import tech.muso.rekoil.core.launch
-import java.util.*
-import java.util.concurrent.SynchronousQueue
 
 class GraphStockFragment : Fragment(), LifecycleOwner {
 
@@ -190,7 +183,7 @@ class GraphStockFragment : Fragment(), LifecycleOwner {
 
 //                                        line.adapter.data.invalidate()
                                         //.value = mutableList.toList()
-                                        line.adapter.scaleType.value = Line.ScaleMode.ALIGN_START
+//                                        line.adapter.scaleType.value = Line.ScaleMode.ALIGN_START
                                     }
                                 }
                             }

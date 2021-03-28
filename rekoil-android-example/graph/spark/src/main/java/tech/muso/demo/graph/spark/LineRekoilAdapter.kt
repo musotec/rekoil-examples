@@ -2,13 +2,11 @@ package tech.muso.demo.graph.spark
 
 
 import android.util.Log
-import tech.muso.demo.graph.core.CandleGraphable
 import tech.muso.demo.graph.spark.graph.Axis
 import tech.muso.demo.graph.spark.graph.Line
 import tech.muso.demo.graph.spark.types.*
 import tech.muso.demo.graph.core.Graphable
 import tech.muso.demo.graph.core.NullGraphable
-import tech.muso.demo.graph.core.PointGraphable
 import tech.muso.rekoil.core.*
 import java.util.*
 
@@ -62,7 +60,7 @@ class LineRekoilAdapter(
     val max get() = data.max
 
     private val selectionRange = selector {
-//        val data = get(data)
+        // FIXME: needs to be invalidated when data changes... immediately!
         val first = get(start)!!
         val last = get(end)!!
 
@@ -82,14 +80,26 @@ class LineRekoilAdapter(
         val start = range * startPct + first.x
         val end = range * endPct + first.x
 
-        var closestStartPointIndex = data.binarySearch { pointF -> pointF.x.compareTo(start) }
-        var closestEndPointIndex = data.binarySearch { pointF -> pointF.x.compareTo(end) }
+        data.use {
+            // use binary search to get the closest point by the x position on the graph.
+            // FIXME: x position in data need not be zero aligned, so this is not correct!
+            // NOTE: the data is assumed to be a time series, so binary search is valid.
+            var closestStartPointIndex = data.binarySearch { pointF -> pointF.x.compareTo(start) }
+            var closestEndPointIndex = data.binarySearch { pointF -> pointF.x.compareTo(end) }
 
-        // have to adjust because binarySearch returns negative if index not found
-        if (closestStartPointIndex < 0) closestStartPointIndex = -1 * closestStartPointIndex - 1
-        if (closestEndPointIndex < 0) closestEndPointIndex = -1 * closestEndPointIndex - 1
+            // have to adjust because binarySearch returns negative if index not found
+            if (closestStartPointIndex < 0) closestStartPointIndex = -1 * closestStartPointIndex - 1
+            if (closestEndPointIndex < 0) closestEndPointIndex = -1 * closestEndPointIndex - 1
 
-        LinearDomain(closestStartPointIndex, closestEndPointIndex)
+            if (data.isEmpty()) return@use null
+
+            // finally, ensure we return a value within the range of our list
+            LinearDomain(
+                closestStartPointIndex.coerceIn(0 until data.size),
+                closestEndPointIndex.coerceIn(0 until data.size)
+            )
+//                .also { println("~$id LinearDomain[${data.size}] = $it") }
+        }
     }
 
     val selectionStartPoint = selector {
@@ -103,54 +113,57 @@ class LineRekoilAdapter(
     }
 
     val trapezoidalIntegralApprox = selector {
-        val (closestStartPointIndex, closestEndPointIndex) = get(selectionRange) ?: return@selector null
+        data.use {
+            val (closestStartPointIndex, closestEndPointIndex) = get(selectionRange) ?: return@use 0.0
 
-        // avoid empty case
-        if (closestEndPointIndex - closestStartPointIndex < 2) return@selector null
+            // avoid empty case
+            if (closestEndPointIndex - closestStartPointIndex < 2) return@use null
 
 //        Log.w("SELECTOR", "[$id] closestStart: $closestStartPointIndex, closestEnd: $closestEndPointIndex")
 
-        try {
             val rightHandApprox =
                 data.subList(closestStartPointIndex, closestEndPointIndex).map { p -> p.y }
                     .reduce { fl, acc ->
                         fl + acc
                     }
             val leftHandApprox =
-                data.subList(closestStartPointIndex + 1, closestEndPointIndex + 1).map { p -> p.y }
+                data.subList(closestStartPointIndex + 1, closestEndPointIndex + 1)
+                    .map { p -> p.y }
                     .sum()
-            return@selector (rightHandApprox + leftHandApprox) / 2f
-        } catch (ignored: Exception) {
-            return@selector null
+            (rightHandApprox + leftHandApprox) / 2f
         }
     }
 
     val deltaX: Selector<Double?> = selector {
         // FIXME: assumes points equally spaced; x/time axis not actually implemented.
-//        val (closestStartPointIndex, closestEndPointIndex) = get(selectionRange) ?: return@selector null
-//        if (data.isEmpty()) null else
-//        (data[closestEndPointIndex.coerceAtMost(data.size-1)].x - data[closestStartPointIndex].x).toDouble()
-        0.0
+        data.use {
+            val (closestStartPointIndex, closestEndPointIndex) = get(selectionRange) ?: return@use 0.0
+            if (data.isEmpty()) null
+            else (data[closestEndPointIndex.coerceAtMost(data.size - 1)].x - data[closestStartPointIndex].x).toDouble()
+        }
     }
 
     val mean: Selector<Double?> = selector {
-        val (closestStartPointIndex, closestEndPointIndex) = get(selectionRange) ?: return@selector null
-//        data.subList(closestStartPointIndex, closestEndPointIndex).run {
-//            sumByDouble { it.y.toDouble() } / size
-//        }
-        0.0
+        data.use {
+            val (closestStartPointIndex, closestEndPointIndex) = get(selectionRange) ?: return@use 0.0
+            data.subList(closestStartPointIndex, closestEndPointIndex).run {
+                sumByDouble { it.y.toDouble() } / size
+            }
+        }
     }
 
     val variance: Selector<Double?> = selector {
-        val mean = get(mean) ?: return@selector null
-        val (closestStartPointIndex, closestEndPointIndex) = get(selectionRange) ?: return@selector null
-//        data.subList(closestStartPointIndex, closestEndPointIndex).run {
-//            map {
-//                val v = (it.y - mean)
-//                return@map v*v
-//            }.sum() / (size - 1)
-//        }
-        0.0
+        data.use {
+            val mean = get(mean) ?: return@use 0.0
+            val (closestStartPointIndex, closestEndPointIndex) = get(selectionRange) ?: return@use 0.0
+            println("~$id [$closestStartPointIndex, $closestEndPointIndex] : ${data.size}")
+            data.subList(closestStartPointIndex, closestEndPointIndex).run {
+                map {
+                    val v = (it.y - mean)
+                    return@map v * v
+                }.sum() / (size - 1)
+            }
+        }
     }
 
     val start: Selector<Graphable?> = selector {
@@ -168,59 +181,9 @@ class LineRekoilAdapter(
         get(data.end)
     }
 
-
-//    @RequiresApi(Build.VERSION_CODES.N)
-//    val maxHeap = PriorityQueue<Graphable> { a, b -> -a.top.compareTo(b.top) }
-//
-//    @RequiresApi(Build.VERSION_CODES.N)
-//    val minHeap = PriorityQueue<Graphable> { a, b -> a.bottom.compareTo(b.bottom) }
-
-
-//    val max: Selector<Float?> = selector {
-////        val data = get(data).also { if (it.isEmpty()) return@selector 0f }
-////        data.maxByOrNull { point -> point.top }?.top ?: 0f
-////        println("MAX--")
-//        val removed = get(data.value.removed)
-//        val added = get(data.value.added)
-////        println("--MAX [${removed.top}, ${added.top}]")
-//        if (removed !is NullGraphable) maxHeap.remove(removed)
-//        if (added !is NullGraphable) maxHeap.add(added)
-//        (maxHeap.peek()?.top ?: 0f).also { println("::max = $it") }
-//    }
-//
-//    val min: Selector<Float?> = selector {
-////        val data = get(data).also { if (it.isEmpty()) return@selector 0f }
-////        data.minByOrNull { point -> point.bottom }?.bottom ?: 0f
-////        println("MIN--")
-//        val removed = get(data.value.removed)
-//        val added = get(data.value.added)
-////        println("--MIN [$removed, $added]")
-//        if (removed !is NullGraphable) minHeap.remove(removed)
-//        if (added !is NullGraphable) minHeap.add(added)
-//        (minHeap.peek()?.bottom ?: 0f).also { println("::min = $it") }
-//    }
-
     val axisArray: MutableList<Axis> = mutableListOf<Axis>().apply {
         add(Axis(0f, true))
     }
-
-//    val lineAttributes: Selector<SparkLineAttributes<Float>?> = selector {
-//        Log.v("SELECTOR", "[$id] lineAttributes.get(data)")
-//        val data = get(data)
-//        Log.v("SELECTOR", "[$id] lineAttributes.get(data) [data.size=${data.size}]")
-//
-//        return@selector if (data.isEmpty())
-//            SparkLineAttributes()
-//        else
-//            SparkLineAttributes<Float>(
-//                start = Pair(0, data[0].y),
-//                end = Pair(data.size - 1, data[data.size - 1].y),
-//                minMaxPair = dataRange ?: DataRange(),
-//                scale = 1f
-//            ).also {
-//                Log.i("LINE ATTRS", "[$id] lineAttributes.update() [lineAttributes=$it]")
-//            }
-//    }
 
     val scaleType: Atom<Line.ScaleMode> = atom {
         Line.ScaleMode.GLOBAL
@@ -260,26 +223,7 @@ class LineRekoilAdapter(
         }
     }
 
-//    var count: RekoilContext.ValueNode<Int?> = selector {
-//        val data = get(data).also { if (it.isEmpty()) return@selector null }
-//        data.size
-//    }
-
-    // TODO: Fix this for Candle? maybe iterator converts to points always
-//    val iterator = selector {
-//        val data = get(data).also { if (it.isEmpty()) return@selector null }
-//        get(start)
-//        get(end)
-//        data.iterator()
-////        get(data).mapIndexed { i, point -> PointGraphable(i.toFloat(), data.value[i].y) }.iterator()
-//    }
-
-    override fun iterator(): Iterator<Graphable> {
-//        if (bounds.isUnset) return listOf<PointF>().iterator()
-        // use int progression over the bounds to control step by; then map to our data.
-//        return (bounds.start until bounds.end step resolution).map { i -> PointF(i.toFloat(), data.value[i].y) }.iterator()
-        return data.iterator() ?: listOf<Graphable>().iterator()
-    }
+    override fun iterator() = data.iterator()
 
     fun unlink() {
         globalUpdater.release()

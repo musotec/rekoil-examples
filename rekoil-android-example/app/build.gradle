@@ -36,6 +36,10 @@ android {
     kotlinOptions {
         jvmTarget = java_version
     }
+
+    packagingOptions {
+        exclude "DebugProbesKt.bin"
+    }
 }
 
 dependencies {

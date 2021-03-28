@@ -60,13 +60,13 @@ class DemoPageAdapter(private val activity: FragmentActivity, fm: FragmentManage
             return ArrayList<FragmentPage>().apply {
                 add(
                     FragmentPage(
-                        GraphStockFragment(),
-                        R.drawable.ic_baseline_trending_up_24)
+                        GraphTestFragment(),
+                        R.drawable.ic_mtrl_chip_checked_diamond)
                 )
                 add(
                     FragmentPage(
-                        GraphTestFragment(),
-                        R.drawable.ic_mtrl_chip_checked_diamond)
+                        GraphStockFragment(),
+                        R.drawable.ic_baseline_trending_up_24)
                 )
                 add(
                     FragmentPage(

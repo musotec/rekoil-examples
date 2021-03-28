@@ -11,6 +11,14 @@ import tech.muso.demo.graph.spark.types.ViewDimensions
  */
 data class Axis(var position: Float,
                 var isHorizontal: Boolean) {
+
+    override fun equals(other: Any?): Boolean {
+        if (other is Axis) {
+            return position == other.position && isHorizontal == other.isHorizontal
+        }
+        return super.equals(other)
+    }
+
     /**
      * The angle of the axis. TODO: support rotational axis via points, but maybe vector class?
      */

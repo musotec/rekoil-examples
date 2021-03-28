@@ -39,17 +39,19 @@ class MinMaxGraphableQueue<T : Graphable>(
 
     override fun poll(): T? {
         val e = super.poll()
-        maxHeap.remove(e)
-        minHeap.remove(e)
-        updateHeaps()
+        if (e != null) {
+            maxHeap.remove(e)
+            minHeap.remove(e)
+            updateHeaps()
+        }
         return e
     }
 
     override fun clear() {
-        super.clear()
         maxHeap.clear()
         minHeap.clear()
         min.value = initialValue.bottom
         max.value = initialValue.top
+        super.clear()
     }
 }
